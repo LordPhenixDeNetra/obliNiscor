@@ -27,10 +27,14 @@ aucune suppression, aucune défragmentation.**
 
 ## Résultats bruts
 
-| Volume | Type | FS | Total | Libre | `incurs_seek_penalty` | `trim_enabled` |
-| --- | --- | --- | --- | --- | --- | --- |
-| `C:\` | fixe | NTFS | 631 597 166 592 | 179 672 821 760 | `false` | `true` |
-| `N:\` | fixe | NTFS | 390 840 971 264 | 210 188 705 792 | `false` | `true` |
+| Volume | Type | FS | Total | Libre | `incurs_seek_penalty` | `trim_enabled` | Bus | Modèle |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `C:\` | fixe | NTFS | 631 597 166 592 | 176 635 101 184 | `false` | `true` | **`raid`** | `SAMSUNG MZVLB1T0HBLR-000H1` |
+| `N:\` | fixe | NTFS | 390 840 971 264 | 209 669 140 480 | `false` | `true` | **`raid`** | idem |
+
+Le modèle est un NVMe (Samsung PM981), mais le bus annoncé est **`raid`** : le disque est
+derrière un contrôleur RAID logiciel (Intel RST / VMD), ce qui est le cas par défaut sur
+beaucoup de portables et de cartes mères récentes.
 
 ## Ce que le spike a établi
 
@@ -48,14 +52,25 @@ aucune suppression, aucune défragmentation.**
 4. **`GetLogicalDriveStringsW` ne rend que les racines à lettre.** Un volume monté dans un
    dossier (point de montage) n'y figure pas ; `FR-STO-1` demande pourtant « lettre **ou** point
    de montage ». Il faudra `FindFirstVolume` / `GetVolumePathNamesForVolumeName` pour les voir.
+5. **Le type de bus ne dit pas NVMe quand un contrôleur RAID s'interpose.** `BusType` rend
+   `raid` sur cette machine, alors que le disque est un NVMe Samsung. Ma conclusion du premier
+   passage — « il suffit d'ajouter `BusType` pour distinguer NVMe de SATA » — était donc
+   fausse : sous RST/VMD, le bus décrit le **contrôleur**, pas le disque.
+6. **Les chaînes de `STORAGE_DEVICE_DESCRIPTOR` sont en ASCII, pas en UTF-16.** Ma première
+   lecture affichait `䅓卍乕⁇婍䱖…` : un octet sur deux pris pour un caractère. Après correction,
+   le même champ donne `SAMSUNG MZVLB1T0HBLR-000H1`. Le nom du disque est lisible — mais il
+   n'est pas normalisé : reconnaître « NVMe » par le modèle est une **heuristique**, pas une
+   garantie.
 
 ## Ce qui reste incertain
 
-- **SSD et NVMe sont indiscernables par la seule pénalité de recherche** : les deux rendent
-  `false`. Pour les distinguer (`FR-STO-1`), il faut le type de bus
-  (`StorageDeviceProperty` → `BusType`, `BusTypeNvme = 17`). Non mesuré ici.
-- **Volumes virtuels, RAID et réseau** : aucun sur cette machine. Ce sont eux qui peuvent
-  mentir sur la pénalité de recherche ; le spike ne peut pas les juger sans eux.
+- **Distinguer NVMe de SATA reste un problème ouvert.** Ni la pénalité de recherche (les deux
+  rendent `false`), ni le type de bus (il dit `raid`), ni le modèle (texte libre) ne donnent
+  une réponse fiable sur une machine à contrôleur RAID. La piste sérieuse est
+  `IOCTL_STORAGE_QUERY_PROPERTY` avec `StorageAdapterProperty` **et** l'énumération des
+  périphériques physiques (`SetupDiGetDeviceRegistryProperty`), hors périmètre de ce spike.
+- **Volumes virtuels et réseau** : aucun sur cette machine. Ce sont eux qui peuvent mentir sur
+  la pénalité de recherche ; le spike ne peut pas les juger sans eux.
 - **Points de reparse** (jonctions, liens symboliques) : non testés. C'est le cœur de
   OBL-053, la tâche la plus dangereuse du projet, et elle mérite son propre spike.
 - **Défragmentation et TRIM effectifs** : non exécutés, et ils ne le seront pas sans votre
@@ -63,9 +78,13 @@ aucune suppression, aucune défragmentation.**
 
 ## Conséquences pour le cahier des charges
 
-- `FR-STO-1` doit demander **deux** informations, pas une : pénalité de recherche (SSD ou
-  HDD) **et** type de bus (NVMe ou SATA). Sans la seconde, l'interface ne peut pas afficher
-  « NVMe ».
+- `FR-STO-1` doit demander **trois** informations, pas deux : pénalité de recherche
+  (SSD ou HDD), type de bus, **et** modèle du disque — parce que le bus seul ne suffit pas
+  sous contrôleur RAID. L'interface affichera « NVMe, d'après le modèle » plutôt que de
+  prétendre le savoir.
+- **Correction du premier passage** : ma recommandation « ajouter `BusType` pour nommer NVMe »
+  était erronée sur une machine RST/VMD, c'est-à-dire sur la majorité des portables récents.
+  Une décision d'architecture ne doit pas reposer sur ce champ seul.
 - La règle « jamais de défragmentation sur SSD » gagne un garde-fou supplémentaire : refuser
   aussi quand la propriété est **indisponible** (volume virtuel, accès refusé), plutôt que de
   supposer un HDD.

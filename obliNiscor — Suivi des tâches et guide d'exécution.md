@@ -92,7 +92,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | OBL-001 | ADR-001 clean room et licence | En revue | — | 1 | 1 | — | `docs/adr/0001-clean-room-et-licence.md` |
 | OBL-002 | Disponibilité du nom | En revue | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres sur crates.io |
-| OBL-003 | Dépôt, outillage, `xtask ci` | En revue | — | 2 | 2 | 001 | `cargo xtask ci` vert : 2 tests, workspace minimal |
+| OBL-003 | Dépôt, outillage, `xtask ci` | En revue | — | 2 | 2 | 001 | `cargo xtask ci` vert ; contrôle i18n ajouté (`locales/en` et `locales/fr`) : 3 tests |
 | OBL-004 | CI Windows x64 et ARM64 | À faire | — | 1,5 | — | 003 |  |
 | OBL-005 | Spike mémoire | À faire | — | 3 | — | 003 |  |
 | OBL-006 | Spike stockage | À faire | — | 1,5 | — | 003 |  |
@@ -256,6 +256,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-003, OBL-015 | Contrôle i18n dans `cargo xtask ci` : complétude des deux langues et présence des clés produites par `Availability::label_key`. Première partie d'OBL-015. | — | PR « feat: check the translations » |
 | 2026-11-01 | OBL-001 à OBL-003 | ADR-0001 (clean room), disponibilité du nom vérifiée, espace de travail et `cargo xtask ci` en état de marche | — | PR « feat: start the project » |
 | 2026-10-31 | OBL-100 à OBL-110 | Révision multi-plateforme : ADR-004 révisé, matrice de disponibilité 6.0, phase P6b (45 j) et installateurs des trois systèmes ; total 202 j, 87 tâches | — | Cahier des charges v0.2 |
 | 2026-10-31 | — | *(exemple)* Création du suivi ; toutes les tâches à « À faire » | — | Ce document |

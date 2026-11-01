@@ -79,3 +79,35 @@ jobs:
       - name: Compilation à la version minimale
         working-directory: obliNiscor
         run: cargo check --workspace --all-targets --locked
+
+  # ARM64 est compilé, jamais exécuté : aucun runner ARM64 n'est disponible gratuitement.
+  # `cargo check` type-vérifie sans lier, donc aucun éditeur de liens croisé n'est requis —
+  # c'est ce qui rend la cible vérifiable pour le prix d'un téléchargement de `rust-std`.
+  arm64:
+    name: arm64 (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: aarch64-unknown-linux-gnu
+          - os: windows-2025
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: obliNiscor
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/lpdnsoft-libs
+          path: lpdnsoft-libs
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: obliNiscor
+      - name: Compilation croisée
+        working-directory: obliNiscor
+        run: cargo check --workspace --target ${{ matrix.target }}

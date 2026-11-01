@@ -53,7 +53,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | P0 Cadrage et spikes | 10 | 6 | 0 | 0 | 0 | 4 | 0 | 33 % |
-| P1 Fondations | 10 | 6 | 2 | 0 | 0 | 2 | 0 | 19 % |
+| P1 Fondations | 10 | 6 | 1 | 1 | 0 | 2 | 0 | 24 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 5 | 0 | 0 | 0 | 0 | 0 | — |
-| **Total** | **87** | **79** | **2** | **0** | **0** | **6** | **0** | **12 %** |
+| **Total** | **87** | **79** | **1** | **1** | **0** | **6** | **0** | **12 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -105,7 +105,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 
 | ID | Tâche | Statut | Resp. | Est. | Réel | Dép. | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| OBL-011 | `obliniscor-core` | En cours | — | 2 | 1 | 010 | `MemoryZone`, `Availability` (+ clés i18n), 3 tests ; manquent les instantanés et les erreurs typées |
+| OBL-011 | `obliniscor-core` | En revue | — | 2 | 1,5 | 010 | modèles (`MemorySnapshot`, `CleanReport`, `ProcessInfo`, `Volume`), `MemoryZone` avec noms d'IPC, `ErrorCode` stable ; 7 tests |
 | OBL-012 | `obliniscor-platform` | Fait | — | 1,5 | 1,5 | 011 | 4 traits de capacité, 3 doublures, 4 tests (PR #4) |
 | OBL-013 | `obliniscor-proto` | Fait | — | 2,5 | 2,5 | 011 | cadrage u32+JSON, bornes 1 Mio, 12 tests (PR #4) |
 | OBL-014 | Garde RAII de privilèges | À faire | — | 1 | — | 012 |  |
@@ -256,6 +256,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-011 | Noyau complété : les modèles y sont rapatriés (ils vivaient dans `platform`, qui ne garde que les traits), noms de zones pour l'IPC et codes d'erreur stables. 30 tests. | — | PR « feat(core): own the models and the stable codes » |
 | 2026-11-01 | OBL-004, OBL-012, OBL-013 | PR #4 fusionnée ; **CI verte sur les trois OS et la MSRV** (4 jobs). OBL-011 et OBL-100 restent *En cours* : le noyau et le socle sont partiels, les marquer « Fait » mentirait. | — | PR #4 |
 | 2026-11-01 | OBL-004, OBL-011 à OBL-013, OBL-100 | Premier lot P1 mené **en équipe** : trois crates indépendants en parallèle (`proto`, `platform`, `sys`), 26 tests, `cargo xtask ci` vert. Revue du Lead : `encode` rend son erreur au lieu d`'un vecteur vide. | — | PR « feat: add the protocol, the platform traits and the system tables » |
 | 2026-11-01 | OBL-003, OBL-015 | Contrôle i18n dans `cargo xtask ci` : complétude des deux langues et présence des clés produites par `Availability::label_key`. Première partie d'OBL-015. | — | PR « feat: check the translations » |

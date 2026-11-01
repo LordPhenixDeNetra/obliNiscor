@@ -1,5 +1,9 @@
 [workspace]
 members = ["crates/*", "xtask"]
+# Les spikes P0 sont des binaires d'exploration jetables, hors du code de production
+# (cahier des charges, OBL-005) : ils vivent sous `spikes/`, avec leur propre espace de
+# travail et leurs propres règles.
+exclude = ["spikes"]
 resolver = "3"
 
 [workspace.package]

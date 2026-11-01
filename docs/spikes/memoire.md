@@ -3,7 +3,7 @@
 - **Date :** 2026-11-01
 - **Machine :** celle du développement — Windows 11, build **10.0.26200**, x64, 32 Gio de RAM
 - **Outil :** `spikes/memoire` (binaire jetable, hors workspace, lecture seule)
-- **État :** **partiel** — Windows 11 x64 mesuré ; Windows 10, Linux et macOS à faire
+- **État :** **partiel** — Windows 11 x64 et Linux x86_64 mesurés ; Windows 10 et macOS à faire
 
 ## Question
 
@@ -72,7 +72,37 @@ d'écart).
    pas ; seul l'éditeur de liens le signale (`LNK2019`). À noter pour la couche
    `obliniscor-sys`, qui devra lier `psapi`.
 
-## Ce qui reste incertain
+## Linux — deuxième passage
+
+Machine : WSL2, noyau `6.6.87.2-microsoft-standard-WSL2`, x86_64, 16 Gio. Binaire **statique
+musl** compilé depuis Windows (`-C linker=rust-lld`), copié dans la distribution : aucune
+installation n'a été faite dans le WSL pour ce spike.
+
+| Champ | Mesure | `free -b` |
+| --- | --- | --- |
+| `total` | 16 670 490 624 | 16 670 490 624 |
+| `free` | 14 042 603 520 | 14 042 603 520 |
+| `available` | 15 651 020 800 | 15 651 287 040 |
+| `swap_total` / `swap_free` | 4 294 967 296 / 4 294 967 296 | identiques |
+| `buffers + cached + sreclaimable` | 1 870 405 632 | `buff/cache` = 1 870 938 112 |
+
+L'écart est de **0,002 %** sur `available` et **0,03 %** sur `buff/cache` — les deux
+commandes ne mesurent pas au même instant. C'est très en deçà du critère de 2 % de `O1`.
+
+### Ce que Linux a établi
+
+5. **`MemAvailable` existe et fait le travail.** Depuis Linux 3.14, le noyau publie déjà
+   l'estimation de mémoire récupérable : sous Linux, obliNiscor n'a **pas** à recalculer
+   « disponible = libre + cache », et ne doit surtout pas le faire autrement que le noyau.
+6. **`buff/cache` demande trois clés.** `Cached` **n'inclut pas** `SReclaimable` : `free`
+   additionne `Buffers + Cached + SReclaimable`. Ne lire que `Cached` sous-estime le cache de
+   273 Mio ici — et bien davantage sur un système qui monte des systèmes de fichiers.
+7. **Le format de `/proc/meminfo` n'est pas régulier.** `MemTotal:` est suivi d'espaces, pas
+   d'un `=`. Ma première version passait la clé sans les deux-points : elle lisait `":"` comme
+   valeur et affichait **zéro pour tout**, sans erreur. Le spike l'a montré ; un test unitaire
+   sur un extrait réel aurait suffi, et trois tests le couvrent maintenant (`linux.rs`).
+
+
 
 - **La liste *standby* n'est pas lisible par ces appels.** Elle sera lue par la requête noyau
   (`SystemMemoryListInformation`), non tentée ici : elle demande `SeProfileSingleProcessPrivilege`

@@ -94,7 +94,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-002 | Disponibilité du nom | Fait | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres (PR #2) |
 | OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
 | OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
-| OBL-005 | Spike mémoire | En cours | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 x64 mesuré (deux pièges documentés) ; Windows 10, Linux et macOS à faire |
+| OBL-005 | Spike mémoire | En cours | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
 | OBL-006 | Spike stockage | À faire | — | 1,5 | — | 003 |  |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
 | OBL-008 | Spike service et canal nommé | À faire | — | 1,5 | — | 003 |  |
@@ -257,6 +257,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-005 | Spike mémoire, second passage : backend Linux (binaire statique musl, rien installé dans le WSL) ; valeurs identiques à `free -b` à 0,03 % près. Troisième piège : `buff/cache` = Buffers + Cached + SReclaimable. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-005 | Spike mémoire commencé : outil jetable `spikes/memoire` (lecture seule) et mesures réelles sur Windows 11. Deux pièges trouvés : `GetPerformanceInfo` compte en pages, et aucune API « publique » ne donne la mémoire libre. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-100 | Cible ARM64 vérifiée en local (Linux 30 s, Windows 9 s) puis ajoutée à la CI. L'empaquetage continu devient OBL-111 : il n'y a encore aucun binaire à empaqueter. | — | PR « ci: check ARM64 » |
 | 2026-11-01 | OBL-011 | Noyau complété : les modèles y sont rapatriés (ils vivaient dans `platform`, qui ne garde que les traits), noms de zones pour l'IPC et codes d'erreur stables. 30 tests. | — | PR « feat(core): own the models and the stable codes » |

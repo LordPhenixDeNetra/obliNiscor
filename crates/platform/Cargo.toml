@@ -1,0 +1,15 @@
+[package]
+name = "obliniscor-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Frontière testable d'obliNiscor avec l'OS : traits de capacité et doublures de test"
+
+[lints]
+workspace = true
+
+[dependencies]
+obliniscor-core = { workspace = true }
+thiserror = { workspace = true }

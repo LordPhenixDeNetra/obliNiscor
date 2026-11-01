@@ -23,17 +23,22 @@ pub enum MemoryZone {
     RegistryCache,
 }
 
-/// Ce qu'un système sait faire d'une zone.
+/// Ce qu'un système sait faire d'une zone, **pour le nettoyage**.
+///
+/// La mesure est un autre axe : macOS mesure parfaitement la mémoire
+/// (`host_statistics64`) mais ne sait pas purger de zone. Ses zones sont donc
+/// `Unavailable` ici, ce qui répond à la seule question qui compte pour l'interface :
+/// peut-on proposer l'action ? (ADR-009)
 ///
 /// Une capacité absente n'est **pas** une erreur : c'est une information à afficher telle
-/// quelle (ADR-009). L'interface grise la zone et dit pourquoi.
+/// quelle. L'interface grise la zone et dit pourquoi.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Availability {
-    /// Mesurable et nettoyable.
+    /// Nettoyable, et mesurable.
     Full,
-    /// Mesurable, nettoyable seulement avec des droits particuliers, ou déconseillé.
+    /// Nettoyable seulement avec des droits particuliers, ou déconseillé.
     Partial,
-    /// Ni mesurable ni nettoyable sur ce système.
+    /// Pas nettoyable sur ce système — ce qui ne dit rien de la mesure.
     Unavailable,
 }
 

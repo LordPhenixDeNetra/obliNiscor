@@ -1,0 +1,14 @@
+[package]
+name = "obliniscor-sys"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Couche système d'obliNiscor : la seule qui parle au système, un module par OS (ADR-004)"
+
+[lints]
+workspace = true
+
+[dependencies]
+obliniscor-core = { workspace = true }

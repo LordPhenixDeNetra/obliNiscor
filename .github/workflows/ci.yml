@@ -1,0 +1,81 @@
+name: CI
+
+# Trois systèmes à chaque fusion : le noyau et la CLI sont portables, et une régression Unix
+# ne doit pas attendre la phase P6b pour être vue (ADR-004).
+#
+# Le dépôt dépend de `../lpdnsoft-libs` par chemin : les deux dépôts sont donc clonés côte à
+# côte, et tout s'exécute depuis `obliNiscor`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Chemins longs (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{ github.workspace }}
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v4
+        with:
+          path: obliNiscor
+
+      # Dépendance par chemin, hors du dépôt : sans ce second clone, `cargo metadata` échoue
+      # sur `lpdnsoft-log` et consorts.
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/lpdnsoft-libs
+          path: lpdnsoft-libs
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: obliNiscor
+
+      - name: Outils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      # La même commande qu'en local : fmt, clippy, tests, deny et contrôle i18n.
+      - name: Contrôles
+        working-directory: obliNiscor
+        run: cargo xtask ci
+
+  # La version minimale supportée est un contrat, pas une décoration : si elle casse, un
+  # contributeur ne peut plus compiler, et il l'apprend ici.
+  msrv:
+    name: msrv (1.95)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: obliNiscor
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/lpdnsoft-libs
+          path: lpdnsoft-libs
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: obliNiscor
+      - name: Compilation à la version minimale
+        working-directory: obliNiscor
+        run: cargo check --workspace --all-targets --locked

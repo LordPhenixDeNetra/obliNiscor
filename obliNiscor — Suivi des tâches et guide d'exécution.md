@@ -52,7 +52,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| P0 Cadrage et spikes | 10 | 5 | 1 | 1 | 0 | 4 | 0 | 38 % |
+| P0 Cadrage et spikes | 10 | 4 | 2 | 0 | 0 | 4 | 0 | 40 % |
 | P1 Fondations | 10 | 6 | 0 | 2 | 0 | 2 | 0 | 24 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -62,8 +62,8 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P6b Backends Linux et macOS | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
-| Tâches C | 5 | 5 | 0 | 0 | 0 | 0 | 0 | — |
-| **Total** | **88** | **79** | **1** | **3** | **0** | **6** | **0** | **13 %** |
+| Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
+| **Total** | **88** | **73** | **2** | **2** | **0** | **6** | **5** | **13 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -95,7 +95,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
 | OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
 | OBL-005 | Spike mémoire | En cours | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
-| OBL-006 | Spike stockage | À faire | — | 1,5 | — | 003 |  |
+| OBL-006 | Spike stockage | En cours | — | 1,5 | 0,5 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
 | OBL-008 | Spike service et canal nommé | À faire | — | 1,5 | — | 003 |  |
 | OBL-009 | Protocole de mesure, machines A–H | À faire | — | 1,5 | — | 003 |  |

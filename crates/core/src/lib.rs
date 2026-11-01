@@ -42,6 +42,23 @@ impl Availability {
     pub const fn can_clean(self) -> bool {
         matches!(self, Self::Full | Self::Partial)
     }
+
+    /// Identifiant Fluent de la mention affichée pour cette disponibilité.
+    ///
+    /// Les clés existent dans `locales/en/obliniscor.ftl` **et** `locales/fr/obliniscor.ftl`,
+    /// et `cargo xtask ci` vérifie les deux sens : aucune langue incomplète, et aucune clé
+    /// produite par ce code qui manquerait dans les traductions (NFR-I18N-1).
+    pub const fn label_key(self) -> &'static str {
+        match self {
+            Self::Full => "availability-full",
+            Self::Partial => "availability-partial",
+            Self::Unavailable => "availability-unavailable",
+        }
+    }
+
+    /// Toutes les variantes, dans l'ordre d'affichage. Sert au contrôle de complétude de
+    /// `cargo xtask ci`.
+    pub const ALL: [Self; 3] = [Self::Full, Self::Partial, Self::Unavailable];
 }
 
 #[cfg(test)]
@@ -58,5 +75,19 @@ mod tests {
     fn an_unavailable_zone_is_never_offered() {
         // C'est la règle de l'ADR-009 : ce qui n'existe pas ne s'annonce pas comme faisable.
         assert!(!Availability::Unavailable.can_clean());
+    }
+
+    #[test]
+    fn every_availability_has_its_own_message_key() {
+        let keys: Vec<&str> = Availability::ALL.iter().map(|a| a.label_key()).collect();
+        let mut unique = keys.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(
+            unique.len(),
+            keys.len(),
+            "deux disponibilités partagent une clé"
+        );
+        assert!(keys.iter().all(|key| key.starts_with("availability-")));
     }
 }

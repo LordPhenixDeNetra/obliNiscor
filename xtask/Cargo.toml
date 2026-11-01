@@ -13,3 +13,6 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+# L'outil de contrôle charge le catalogue pour vérifier les traductions (NFR-I18N-1).
+lpdnsoft-i18n = { workspace = true }
+obliniscor-core = { workspace = true }

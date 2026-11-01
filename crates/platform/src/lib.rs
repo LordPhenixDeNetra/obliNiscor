@@ -23,55 +23,10 @@ use thiserror::Error;
 
 pub mod fakes;
 
-/// Photo de l'état de la mémoire physique, en octets.
-///
-/// Les trois valeurs sont lues à quelques microsecondes d'écart sur la plupart des systèmes :
-/// elles ne sont donc pas atomiques entre elles, et le noyau ne doit pas en déduire un
-/// invariant strict. `available` inclut par convention la mémoire libre et la mémoire
-/// récupérable (cache standby sur Windows), d'où sa valeur supérieure à `free`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MemorySnapshot {
-    /// Mémoire physique totale, en octets.
-    pub total: u64,
-    /// Mémoire disponible pour de nouvelles allocations, en octets.
-    pub available: u64,
-    /// Mémoire réellement libre (sans cache récupérable), en octets.
-    pub free: u64,
-}
-
-/// Résultat d'une demande de nettoyage mémoire.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CleanReport {
-    /// Octets effectivement libérés, tel que mesuré par le backend.
-    ///
-    /// Vaut zéro pour une simulation (`dry_run`), qui ne libère rien par définition.
-    pub freed: u64,
-    /// Zones traitées, dans l'ordre demandé.
-    pub zones: Vec<MemoryZone>,
-}
-
-/// Processus tel que l'énumération système le décrit.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProcessInfo {
-    /// Identifiant du processus.
-    pub pid: u32,
-    /// Nom du processus, tel que fourni par le système (jamais un chemin deviné).
-    pub name: String,
-    /// Ensemble de travail du processus, en octets.
-    pub working_set: u64,
-}
-
-/// Volume monté sur le système de fichiers.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Volume {
-    /// Point de montage tel que le système le nomme (`C:\`, `/`, `/Volumes/…`).
-    pub mount: String,
-    /// Capacité totale du volume, en octets.
-    pub total: u64,
-    /// Espace libre du volume, en octets.
-    pub free: u64,
-}
-
+// Les modèles vivent dans le noyau : `obliniscor-platform` ne définit que les **traits** et
+// leurs doublures. Les réexporter ici évite aux appelants de dépendre du noyau pour lire un
+// simple instantané, et laisse une seule définition, celle que le noyau documente.
+pub use obliniscor_core::{CleanReport, MemorySnapshot, ProcessInfo, Volume};
 /// Erreur d'un backend de la frontière système.
 ///
 /// Trois causes seulement, distinctes pour l'utilisateur comme pour le noyau :

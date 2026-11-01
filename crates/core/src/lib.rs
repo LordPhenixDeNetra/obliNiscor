@@ -66,6 +66,118 @@ impl Availability {
     pub const ALL: [Self; 3] = [Self::Full, Self::Partial, Self::Unavailable];
 }
 
+impl MemoryZone {
+    /// Nom stable de la zone, utilisé dans l'IPC et par la CLI.
+    ///
+    /// Ce nom est un **contrat** : le service et les clients peuvent être de versions
+    /// différentes, et une zone renommée casserait la compatibilité. Il ne suit donc pas le
+    /// nom du variant Rust, qui peut changer sans préavis.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::WorkingSet => "working-set",
+            Self::SystemCache => "system-cache",
+            Self::ModifiedList => "modified-list",
+            Self::Standby => "standby",
+            Self::RegistryCache => "registry-cache",
+        }
+    }
+
+    /// Toutes les zones connues, dans l'ordre d'affichage.
+    pub const ALL: [Self; 5] = [
+        Self::WorkingSet,
+        Self::SystemCache,
+        Self::ModifiedList,
+        Self::Standby,
+        Self::RegistryCache,
+    ];
+
+    /// Relit un nom stable ; `None` pour un nom inconnu, jamais pour un nom mal formé.
+    ///
+    /// L'IPC reçoit des chaînes : une zone inconnue doit être **refusée** par l'appelant
+    /// (message d'erreur explicite) et non ignorée en silence.
+    pub fn parse(name: &str) -> Option<Self> {
+        Self::ALL
+            .into_iter()
+            .find(|zone| zone.as_str() == name.trim().to_ascii_lowercase())
+    }
+}
+
+/// Code d'erreur stable, exposé par l'IPC et la CLI (cahier des charges §8.3).
+///
+/// Un client de version différente doit pouvoir comprendre l'échec sans lire un message
+/// traduit : c'est le code qui est le contrat, le texte n'est qu'un confort.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorCode {
+    /// La fonction n'existe pas sur ce système (ADR-009).
+    Unavailable,
+    /// Droits insuffisants pour l'opération demandée.
+    Denied,
+    /// L'opération a échoué ; la cause est dans le message.
+    Failed,
+    /// Le message reçu n'est pas un message du protocole.
+    Protocol,
+    /// Erreur interne du service, qui ne devrait pas arriver.
+    Internal,
+}
+
+impl ErrorCode {
+    /// Forme sérialisée, stable et indépendante de la langue.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Unavailable => "E_UNAVAILABLE",
+            Self::Denied => "E_DENIED",
+            Self::Failed => "E_FAILED",
+            Self::Protocol => "E_PROTOCOL",
+            Self::Internal => "E_INTERNAL",
+        }
+    }
+
+    /// Toutes les variantes ; sert aux tests de stabilité.
+    pub const ALL: [Self; 5] = [
+        Self::Unavailable,
+        Self::Denied,
+        Self::Failed,
+        Self::Protocol,
+        Self::Internal,
+    ];
+}
+
+/// État de la mémoire à un instant donné, tel que le système le rapporte.
+///
+/// Les trois valeurs sont en octets et ne sont **pas** recalculées ici : `available` vient du
+/// système, qui sait mieux que nous ce qui est réutilisable (sous Linux, `MemAvailable`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct MemorySnapshot {
+    pub total: u64,
+    pub available: u64,
+    pub free: u64,
+}
+
+/// Résultat d'une opération de nettoyage, zone par zone.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct CleanReport {
+    /// Octets libérés, tels que mesurés avant et après.
+    pub freed: u64,
+    /// Zones effectivement traitées, dans l'ordre d'exécution.
+    pub zones: Vec<MemoryZone>,
+}
+
+/// Un processus observé, réduit à ce que la liste affiche.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProcessInfo {
+    pub pid: u32,
+    pub name: String,
+    pub working_set: u64,
+}
+
+/// Un volume monté et son espace.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Volume {
+    pub mount: String,
+    pub total: u64,
+    pub free: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -94,5 +206,55 @@ mod tests {
             "deux disponibilités partagent une clé"
         );
         assert!(keys.iter().all(|key| key.starts_with("availability-")));
+    }
+
+    #[test]
+    fn a_zone_name_survives_a_round_trip() {
+        // Le nom est un contrat d'IPC : s'il change, un client d'une autre version casse.
+        for zone in MemoryZone::ALL {
+            assert_eq!(MemoryZone::parse(zone.as_str()), Some(zone));
+        }
+    }
+
+    #[test]
+    fn an_unknown_zone_name_is_refused() {
+        assert_eq!(MemoryZone::parse("liste-standby"), None);
+        assert_eq!(MemoryZone::parse(""), None);
+        // Une casse ou des espaces ne changent pas le nom : c'est du confort de lecture, pas
+        // une tolérance sur le contrat.
+        assert_eq!(MemoryZone::parse("  Standby  "), Some(MemoryZone::Standby));
+    }
+
+    #[test]
+    fn zone_names_are_unique_and_kebab_case() {
+        let names: Vec<&str> = MemoryZone::ALL.iter().map(|z| z.as_str()).collect();
+        let mut unique = names.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(unique.len(), names.len(), "deux zones partagent un nom");
+        assert!(
+            names
+                .iter()
+                .all(|name| name.chars().all(|c| c.is_ascii_lowercase() || c == '-')),
+            "{names:?}"
+        );
+    }
+
+    #[test]
+    fn error_codes_are_stable_and_unique() {
+        // Le code est ce qu'un client d'une autre version lit ; il ne doit jamais bouger.
+        let expected = [
+            "E_UNAVAILABLE",
+            "E_DENIED",
+            "E_FAILED",
+            "E_PROTOCOL",
+            "E_INTERNAL",
+        ];
+        let codes: Vec<&str> = ErrorCode::ALL.iter().map(|c| c.as_str()).collect();
+        assert_eq!(codes, expected);
+        let mut unique = codes.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(unique.len(), codes.len(), "deux erreurs partagent un code");
     }
 }

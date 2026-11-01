@@ -5,7 +5,11 @@
 //! pour qu'un échec local soit un échec distant.
 
 use anyhow::{Context, Result, bail};
+use std::path::Path;
 use std::process::Command;
+
+/// Dossier des traductions Fluent, à la racine du dépôt.
+const LOCALES_DIR: &str = "locales";
 
 /// Les étapes, dans l'ordre. `--locked` partout : sans lui, une dépendance ajoutée sans
 /// mettre à jour `Cargo.lock` passerait la CI et casserait un build reproductible.
@@ -43,6 +47,8 @@ fn ci() -> Result<()> {
         bail!("cargo-deny manquant : cargo install cargo-deny --locked");
     }
 
+    check_i18n()?;
+
     for args in STEPS {
         let shown = format!("cargo {}", args.join(" "));
         eprintln!("==> {shown}");
@@ -56,5 +62,30 @@ fn ci() -> Result<()> {
     }
 
     eprintln!("==> ci OK");
+    Ok(())
+}
+
+/// Vérifie que les traductions sont complètes, et que les clés produites par le code existent.
+///
+/// Deux contrôles distincts, parce qu'ils attrapent deux erreurs différentes :
+/// `check_complete` voit une clé ajoutée dans une langue et oubliée dans l'autre ; la boucle
+/// ci-dessous voit une clé renommée dans le code et pas dans les `.ftl` — ce que la macro `t!`
+/// attrapera plus tard à la compilation, mais qui serait invisible tant qu'aucune interface
+/// n'existe.
+fn check_i18n() -> Result<()> {
+    eprintln!("==> i18n : {LOCALES_DIR}/ complet");
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+    let catalog = lpdnsoft_i18n::load_catalog(&root.join(LOCALES_DIR))
+        .context("lecture des fichiers de traduction")?;
+    lpdnsoft_i18n::check_complete(&catalog).map_err(|e| anyhow::anyhow!("{e}"))?;
+
+    for availability in obliniscor_core::Availability::ALL {
+        let key = availability.label_key();
+        for (locale, ids) in &catalog.locales {
+            if !ids.contains(key) {
+                bail!("clé `{key}` absente de la langue `{locale}`");
+            }
+        }
+    }
     Ok(())
 }

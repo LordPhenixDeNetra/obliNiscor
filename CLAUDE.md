@@ -59,8 +59,8 @@ Prérequis : Rust stable ≥ 1.95, `cargo install cargo-deny --locked`. La CI to
 ## Disponibilité par système (ADR-009, matrice 6.0)
 
 Une fonction absente **n'est pas simulée** : elle est déclarée indisponible avec sa raison.
-Notamment : sous macOS, le nettoyage mémoire, la réduction de working set et le blocage réseau
-par application n'existent pas ; sous Linux, le nettoyage mémoire est réservé à root et
+Notamment : sous macOS, le nettoyage mémoire, la réduction de working set et le blocage
+réseau par application n'existent pas ; sous Linux, le nettoyage mémoire est réservé à root et
 désactivé par défaut.
 
 ## i18n
@@ -83,8 +83,12 @@ casse la compilation.
 
 ## État et périmètre
 
-**Aucune ligne de code n'existe.** Le dossier contient le cahier des charges (v0.2,
-multi-plateforme) et le suivi des tâches (v0.2, 87 tâches, 0 %). Le premier travail est
-OBL-003 : créer l'espace de travail et `cargo xtask ci`. Les hypothèses marquées « à valider »
-dans le cahier des charges se lèvent en phase P0, par des spikes, avant tout code de
-production.
+**Le code s'arrête au squelette.** L'espace de travail existe et `cargo xtask ci` est vert :
+`fmt --check`, `clippy -D warnings`, trois tests, `cargo deny check`, et le contrôle i18n
+(les deux langues contiennent les mêmes clés, et les clés produites par le code existent).
+Le crate `obliniscor-core` ne contient que des types purs. Rien ne parle encore au système :
+la couche `obliniscor-sys` et les binaires arrivent avec leurs tâches.
+
+Les prochains travaux sont **OBL-004** (intégration continue sur les trois systèmes, qui doit
+cloner `../lpdnsoft-libs`) puis les **spikes OBL-005 à OBL-009**, qui lèvent les hypothèses
+« à valider » du cahier des charges avant tout code de production.

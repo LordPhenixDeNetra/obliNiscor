@@ -1,0 +1,47 @@
+# Compilation
+
+/target
+**/target
+
+# Artefacts d'empaquetage : produits par la CI et par xtask, jamais commités
+*.msi
+*.wixpdb
+*.deb
+*.rpm
+*.pkg
+*.AppImage
+*.zip
+*.tar.gz
+
+# Journaux et états locaux (fichiers produits à l'exécution, pas les fixtures de test)
+*.log
+/logs/
+/history.jsonl
+
+# Éditeurs et outils
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# Systèmes de fichiers
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Couverture et profils
+*.profraw
+*.profdata
+lcov.info
+coverage/
+
+# Secrets : jamais commités (voir OBL-090 pour la signature)
+*.pem
+*.pfx
+*.snk
+.env
+.env.*
+
+AGENTS.local.md
+CLAUDE.local.md

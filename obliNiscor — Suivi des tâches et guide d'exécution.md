@@ -52,8 +52,8 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| P0 Cadrage et spikes | 10 | 6 | 0 | 4 | 0 | 0 | 0 | 0 % |
-| P1 Fondations | 10 | 6 | 0 | 4 | 0 | 0 | 0 | 0 % |
+| P0 Cadrage et spikes | 10 | 6 | 0 | 0 | 0 | 4 | 0 | 33 % |
+| P1 Fondations | 10 | 6 | 2 | 0 | 0 | 2 | 0 | 19 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 5 | 0 | 0 | 0 | 0 | 0 | — |
-| **Total** | **87** | **79** | **0** | **8** | **0** | **0** | **0** | **0 %** |
+| **Total** | **87** | **79** | **2** | **0** | **0** | **6** | **0** | **12 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -90,10 +90,10 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 
 | ID | Tâche | Statut | Resp. | Est. | Réel | Dép. | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| OBL-001 | ADR-001 clean room et licence | En revue | — | 1 | 1 | — | `docs/adr/0001-clean-room-et-licence.md` |
-| OBL-002 | Disponibilité du nom | En revue | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres sur crates.io |
-| OBL-003 | Dépôt, outillage, `xtask ci` | En revue | — | 2 | 2 | 001 | `cargo xtask ci` vert ; contrôle i18n ajouté (`locales/en` et `locales/fr`) : 3 tests |
-| OBL-004 | CI Windows x64 et ARM64 | En revue | — | 1,5 | 1,5 | 003 | `.github/workflows/ci.yml` : trois OS + MSRV, clone le dépôt frère ; **jamais exécuté** |
+| OBL-001 | ADR-001 clean room et licence | Fait | — | 1 | 1 | — | `docs/adr/0001-clean-room-et-licence.md` (PR #2) |
+| OBL-002 | Disponibilité du nom | Fait | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres (PR #2) |
+| OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
+| OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
 | OBL-005 | Spike mémoire | À faire | — | 3 | — | 003 |  |
 | OBL-006 | Spike stockage | À faire | — | 1,5 | — | 003 |  |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
@@ -105,16 +105,16 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 
 | ID | Tâche | Statut | Resp. | Est. | Réel | Dép. | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| OBL-011 | `obliniscor-core` | En revue | — | 2 | 1 | 010 | `MemoryZone`, `Availability` (+ clés i18n), 3 tests |
-| OBL-012 | `obliniscor-platform` | En revue | — | 1,5 | 1,5 | 011 | 4 traits de capacité, 3 doublures, 4 tests |
-| OBL-013 | `obliniscor-proto` | En revue | — | 2,5 | 2,5 | 011 | cadrage u32+JSON, bornes 1 Mio, 12 tests |
+| OBL-011 | `obliniscor-core` | En cours | — | 2 | 1 | 010 | `MemoryZone`, `Availability` (+ clés i18n), 3 tests ; manquent les instantanés et les erreurs typées |
+| OBL-012 | `obliniscor-platform` | Fait | — | 1,5 | 1,5 | 011 | 4 traits de capacité, 3 doublures, 4 tests (PR #4) |
+| OBL-013 | `obliniscor-proto` | Fait | — | 2,5 | 2,5 | 011 | cadrage u32+JSON, bornes 1 Mio, 12 tests (PR #4) |
 | OBL-014 | Garde RAII de privilèges | À faire | — | 1 | — | 012 |  |
 | OBL-015 | Intégration des libs, réglages v1 | À faire | — | 2 | — | 011 |  |
 | OBL-016 | Historique JSONL | À faire | — | 1,5 | — | 015 |  |
 | OBL-017 | Service Windows | À faire | — | 3 | — | 008, 014 |  |
 | OBL-018 | Serveur et client IPC | À faire | — | 3 | — | 013, 017 |  |
 | OBL-019 | CLI squelette | À faire | — | 1,5 | — | 018 |  |
-| OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | En revue | — | 3 | 2 | 011 | `sys` : trois modules et matrice 6.0 exécutable, 6 tests + 1 doctest ; `unsafe` reste interdit |
+| OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | En cours | — | 3 | 2 | 011 | `sys` : trois modules et matrice 6.0 exécutable, 6 tests ; manquent ARM64 et l'empaquetage continu |
 
 ### P2 — Mémoire
 
@@ -256,6 +256,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-004, OBL-012, OBL-013 | PR #4 fusionnée ; **CI verte sur les trois OS et la MSRV** (4 jobs). OBL-011 et OBL-100 restent *En cours* : le noyau et le socle sont partiels, les marquer « Fait » mentirait. | — | PR #4 |
 | 2026-11-01 | OBL-004, OBL-011 à OBL-013, OBL-100 | Premier lot P1 mené **en équipe** : trois crates indépendants en parallèle (`proto`, `platform`, `sys`), 26 tests, `cargo xtask ci` vert. Revue du Lead : `encode` rend son erreur au lieu d`'un vecteur vide. | — | PR « feat: add the protocol, the platform traits and the system tables » |
 | 2026-11-01 | OBL-003, OBL-015 | Contrôle i18n dans `cargo xtask ci` : complétude des deux langues et présence des clés produites par `Availability::label_key`. Première partie d'OBL-015. | — | PR « feat: check the translations » |
 | 2026-11-01 | OBL-001 à OBL-003 | ADR-0001 (clean room), disponibilité du nom vérifiée, espace de travail et `cargo xtask ci` en état de marche | — | PR « feat: start the project » |

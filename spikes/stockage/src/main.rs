@@ -37,16 +37,6 @@ struct StoragePropertyQuery {
     additional: [u8; 4],
 }
 
-/// `DEVICE_SEEK_PENALTY_DESCRIPTOR` et `DEVICE_TRIM_DESCRIPTOR` ont la même forme.
-#[repr(C)]
-#[derive(Default)]
-struct DeviceDescriptor {
-    version: u32,
-    size: u32,
-    enabled: u8,
-    _padding: [u8; 3],
-}
-
 #[link(name = "kernel32")]
 unsafe extern "system" {
     fn GetLogicalDriveStringsW(length: u32, buffer: *mut u16) -> u32;
@@ -171,14 +161,22 @@ fn describe(root: &str) -> String {
 
     let seek = query_descriptor(root, PROPERTY_SEEK_PENALTY);
     let trim = query_descriptor(root, PROPERTY_TRIM);
+    let property = device_property(root);
 
     format!(
         "{{\"root\":{root:?},\"type\":\"{}\",\"filesystem\":{filesystem:?},\
          \"total\":{total},\"free\":{total_free},\
-         \"incurs_seek_penalty\":{},\"trim_enabled\":{}}}",
+         \"incurs_seek_penalty\":{},\"trim_enabled\":{},\
+         \"bus\":{},\"product\":{}}}",
         kind(drive_type),
         seek.map_or("null".to_owned(), |value| format!("{value}")),
-        trim.map_or("null".to_owned(), |value| format!("{value}"))
+        trim.map_or("null".to_owned(), |value| format!("{value}")),
+        property
+            .as_ref()
+            .map_or("null".to_owned(), |p| format!("{:?}", p.bus)),
+        property
+            .as_ref()
+            .map_or("null".to_owned(), |p| format!("{:?}", p.product))
     )
 }
 
@@ -188,6 +186,20 @@ fn describe(root: &str) -> String {
 /// parfois des droits), et ce refus est une **information** — il ne se transforme pas en
 /// « SSD » par défaut.
 fn query_descriptor(root: &str, property: u32) -> Option<bool> {
+    // Les deux descripteurs qui nous intéressent ont la même forme : `Version`, `Size`, puis un
+    // octet à l'offset 8.
+    let mut buffer = [0u8; 16];
+    if !query_raw(root, property, &mut buffer) {
+        return None;
+    }
+    Some(buffer[8] != 0)
+}
+
+/// Appel brut `IOCTL_STORAGE_QUERY_PROPERTY` : remplit `buffer` et dit si l'appel a réussi.
+///
+/// Mutualisé parce que trois propriétés différentes sont interrogées ; le tampon de sortie
+/// appartient à l'appelant, qui sait quelle structure il attend.
+fn query_raw(root: &str, property: u32, buffer: &mut [u8]) -> bool {
     let device = format!(r"\\.\{}", root.trim_end_matches('\\'));
     let wide = to_wide(&device);
     // SAFETY: chaîne UTF-16 terminée par NUL.
@@ -209,7 +221,7 @@ fn query_descriptor(root: &str, property: u32) -> Option<bool> {
         // SAFETY: aucun argument ; lit le code d'erreur du fil courant.
         let code = unsafe { GetLastError() };
         eprintln!("CreateFile {device} -> erreur {code}");
-        return None;
+        return false;
     }
 
     let mut query = StoragePropertyQuery {
@@ -217,7 +229,6 @@ fn query_descriptor(root: &str, property: u32) -> Option<bool> {
         query_type: 0,
         additional: [0; 4],
     };
-    let mut descriptor = DeviceDescriptor::default();
     let mut returned = 0u32;
     // SAFETY: les deux tampons sont de la taille annoncée, et le handle est valide jusqu'à
     // `CloseHandle`.
@@ -227,8 +238,8 @@ fn query_descriptor(root: &str, property: u32) -> Option<bool> {
             IOCTL_STORAGE_QUERY_PROPERTY,
             (&mut query as *mut StoragePropertyQuery).cast(),
             size_of::<StoragePropertyQuery>() as u32,
-            (&mut descriptor as *mut DeviceDescriptor).cast(),
-            size_of::<DeviceDescriptor>() as u32,
+            buffer.as_mut_ptr().cast(),
+            buffer.len() as u32,
             &mut returned,
             std::ptr::null_mut(),
         )
@@ -240,9 +251,9 @@ fn query_descriptor(root: &str, property: u32) -> Option<bool> {
         // SAFETY: aucun argument ; lit le code d'erreur du fil courant.
         let code = unsafe { GetLastError() };
         eprintln!("DeviceIoControl {device} (propriété {property}) -> erreur {code}");
-        return None;
+        return false;
     }
-    Some(descriptor.enabled != 0)
+    true
 }
 
 fn kind(drive_type: u32) -> &'static str {
@@ -253,6 +264,84 @@ fn kind(drive_type: u32) -> &'static str {
         DRIVE_CDROM => "optique",
         DRIVE_RAMDISK => "ramdisk",
         _ => "inconnu",
+    }
+}
+
+/// `STORAGE_DEVICE_PROPERTY` : le type de bus, et l'identité du disque.
+///
+/// C'est la seule information qui distingue un **SSD SATA** d'un **NVMe** : la pénalité de
+/// recherche vaut `false` pour les deux. Le descripteur est une structure à taille variable
+/// (les chaînes suivent les champs fixes), donc on lit des décalages documentés plutôt que de
+/// déclarer un `repr(C)` complet — c'est le genre de structure où se tromper d'alignement ne
+/// se voit pas.
+struct DeviceProperty {
+    bus: &'static str,
+    product: String,
+}
+
+/// Décalages documentés dans `STORAGE_DEVICE_DESCRIPTOR`.
+const OFFSET_PRODUCT_ID: usize = 16;
+const OFFSET_BUS_TYPE: usize = 28;
+
+fn device_property(root: &str) -> Option<DeviceProperty> {
+    let mut buffer = [0u8; 1024];
+    if !query_raw(root, 0, &mut buffer) {
+        return None;
+    }
+    // Le champ `Size` annoncé par le pilote dit jusqu'où la structure est valide.
+    let size = u32::from_le_bytes(buffer[4..8].try_into().ok()?) as usize;
+    if size < OFFSET_BUS_TYPE + 4 {
+        return None;
+    }
+    let bus_type = u32::from_le_bytes(
+        buffer[OFFSET_BUS_TYPE..OFFSET_BUS_TYPE + 4]
+            .try_into()
+            .ok()?,
+    );
+    Some(DeviceProperty {
+        bus: bus_name(bus_type),
+        product: string_at(&buffer, size, OFFSET_PRODUCT_ID),
+    })
+}
+
+/// Lit une chaîne terminée par NUL, à l'offset indiqué par un champ du descripteur.
+///
+/// **Ce sont des chaînes ASCII**, pas UTF-16 : la documentation de
+/// `STORAGE_DEVICE_DESCRIPTOR` le dit (« null-terminated ASCII string »), et ma première
+/// version les lisait en UTF-16 — d'où un nom de produit illisible, du type
+/// « 䅓卍乕⁇婍䱖 » : un octet sur deux était pris pour un caractère.
+fn string_at(buffer: &[u8], size: usize, offset_field: usize) -> String {
+    let Some(bytes) = buffer.get(offset_field..offset_field + 4) else {
+        return String::new();
+    };
+    let Ok(raw) = <[u8; 4]>::try_from(bytes) else {
+        return String::new();
+    };
+    let offset = u32::from_le_bytes(raw) as usize;
+    if offset == 0 || offset >= size {
+        return String::new();
+    }
+    let bytes = &buffer[offset..size.min(buffer.len())];
+    let end = bytes.iter().position(|byte| *byte == 0).unwrap_or(0);
+    String::from_utf8_lossy(&bytes[..end]).trim().to_owned()
+}
+
+fn bus_name(bus_type: u32) -> &'static str {
+    match bus_type {
+        0 => "inconnu",
+        3 => "ata",
+        7 => "usb",
+        8 => "raid",
+        10 => "sas",
+        11 => "sata",
+        12 => "sd",
+        14 => "virtuel",
+        15 => "fichier virtuel",
+        16 => "spaces",
+        17 => "nvme",
+        18 => "scm",
+        19 => "ufs",
+        _ => "autre",
     }
 }
 

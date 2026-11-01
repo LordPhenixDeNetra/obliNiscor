@@ -1,0 +1,3 @@
+[alias]
+# `cargo xtask ci` : la commande unique de contrôle, la même en local et en CI.
+xtask = "run --package xtask --"

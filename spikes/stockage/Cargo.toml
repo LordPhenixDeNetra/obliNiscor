@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "spike-stockage"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Spike P0 : volumes et type de média sous Windows (jetable, hors production)"
+
+[dependencies]

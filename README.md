@@ -13,8 +13,13 @@ et macOS**. Septième projet de la suite **LPDNSoft**, après `lpdnsoft-libs`, `
 | Élément | Fichier | État |
 | --- | --- | --- |
 | Cahier des charges | `obliNiscor — Cahier des charges et cahier des tâches.md` | v0.2, multi-plateforme |
-| Suivi des tâches | `obliNiscor — Suivi des tâches et guide d'exécution.md` | v0.2, 87 tâches, 0 % |
-| Code, crates, service, interface | — | **aucun** |
+| Suivi des tâches | `obliNiscor — Suivi des tâches et guide d'exécution.md` | v0.2, 87 tâches, 3 en revue |
+| Espace de travail | `Cargo.toml`, `crates/core`, `xtask`, `locales` | `cargo xtask ci` vert : 3 tests, contrôle i18n |
+| Binaires, service, interface | — | **aucun** |
+
+Le code s'arrête au noyau : des types purs (`MemoryZone`, `Availability`) et leur règle
+centrale — une fonction indisponible n'est jamais proposée. Rien ne parle encore au système.
+
 
 ## Ce que le produit fera
 

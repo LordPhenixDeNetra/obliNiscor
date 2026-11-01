@@ -52,7 +52,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| P0 Cadrage et spikes | 10 | 6 | 0 | 0 | 0 | 4 | 0 | 33 % |
+| P0 Cadrage et spikes | 10 | 5 | 1 | 1 | 0 | 4 | 0 | 38 % |
 | P1 Fondations | 10 | 6 | 0 | 2 | 0 | 2 | 0 | 24 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 5 | 0 | 0 | 0 | 0 | 0 | — |
-| **Total** | **88** | **80** | **0** | **2** | **0** | **6** | **0** | **12 %** |
+| **Total** | **88** | **79** | **1** | **3** | **0** | **6** | **0** | **13 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -94,7 +94,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-002 | Disponibilité du nom | Fait | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres (PR #2) |
 | OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
 | OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
-| OBL-005 | Spike mémoire | À faire | — | 3 | — | 003 |  |
+| OBL-005 | Spike mémoire | En cours | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 x64 mesuré (deux pièges documentés) ; Windows 10, Linux et macOS à faire |
 | OBL-006 | Spike stockage | À faire | — | 1,5 | — | 003 |  |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
 | OBL-008 | Spike service et canal nommé | À faire | — | 1,5 | — | 003 |  |
@@ -257,6 +257,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-005 | Spike mémoire commencé : outil jetable `spikes/memoire` (lecture seule) et mesures réelles sur Windows 11. Deux pièges trouvés : `GetPerformanceInfo` compte en pages, et aucune API « publique » ne donne la mémoire libre. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-100 | Cible ARM64 vérifiée en local (Linux 30 s, Windows 9 s) puis ajoutée à la CI. L'empaquetage continu devient OBL-111 : il n'y a encore aucun binaire à empaqueter. | — | PR « ci: check ARM64 » |
 | 2026-11-01 | OBL-011 | Noyau complété : les modèles y sont rapatriés (ils vivaient dans `platform`, qui ne garde que les traits), noms de zones pour l'IPC et codes d'erreur stables. 30 tests. | — | PR « feat(core): own the models and the stable codes » |
 | 2026-11-01 | OBL-004, OBL-012, OBL-013 | PR #4 fusionnée ; **CI verte sur les trois OS et la MSRV** (4 jobs). OBL-011 et OBL-100 restent *En cours* : le noyau et le socle sont partiels, les marquer « Fait » mentirait. | — | PR #4 |

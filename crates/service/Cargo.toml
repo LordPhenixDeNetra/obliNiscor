@@ -14,3 +14,5 @@ workspace = true
 obliniscor-core = { workspace = true }
 obliniscor-platform = { workspace = true }
 obliniscor-proto = { workspace = true }
+# Le transport du canal nommé, qui n'existe que sous Windows ; il est compilé sous cfg(windows).
+obliniscor-sys = { workspace = true }

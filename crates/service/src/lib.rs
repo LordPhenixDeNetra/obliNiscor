@@ -15,6 +15,10 @@ use obliniscor_platform::{
 };
 use obliniscor_proto::Message;
 
+pub mod answer;
+#[cfg(windows)]
+pub mod pipe_server;
+
 /// Ce que le service répond à un message.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Reply {

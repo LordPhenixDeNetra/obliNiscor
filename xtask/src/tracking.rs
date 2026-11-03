@@ -72,7 +72,11 @@ pub fn parse(content: &str) -> Result<Tracking> {
             && trimmed.starts_with("| B-")
             && let Some(reference) = first_task_reference(trimmed)
         {
-            tracking.blocked_registry.push(reference);
+            // Une ligne « Levé » reste visible pour la mémoire du projet : elle ne désigne
+            // donc plus une tâche bloquée, et ne doit pas être confrontée aux tableaux.
+            if !trimmed.ends_with("| Levé |") {
+                tracking.blocked_registry.push(reference);
+            }
             continue;
         }
 
@@ -404,5 +408,18 @@ mod tests {
         // Le total ne correspond plus non plus : c'est la première règle qui parle.
         let error = verify(&tracking).expect_err("doublon");
         assert!(!error.to_string().is_empty());
+    }
+
+    #[test]
+    fn a_resolved_registry_row_may_cite_a_task_that_is_no_longer_blocked() {
+        // Le document dit qu'une ligne « Levé » reste visible pour la mémoire du projet : elle
+        // n'est donc plus confrontée aux tableaux, sans quoi lever un blocage casserait la CI.
+        let resolved = DOCUMENT.replace(
+            "| B-002 | OBL-005 | attend une machine |",
+            "| B-002 | OBL-005 | attend une machine |\n| B-004 | OBL-001 | ancien blocage | — | lead | — | 2026-11-03 | Levé |",
+        );
+        let tracking = parse(&resolved).expect("analyse");
+        verify(&tracking).expect("une ligne levée ne désigne plus une tâche bloquée");
+        assert_eq!(tracking.blocked_registry, ["OBL-005"]);
     }
 }

@@ -23,6 +23,53 @@ pub enum MemoryZone {
     RegistryCache,
 }
 
+/// Un privilège que le processus peut activer le temps d'une opération.
+///
+/// Les noms sont ceux de Windows et ils sont **stables** : ils apparaissent dans les journaux
+/// et les messages d'erreur, donc ils ne suivent pas le nom du variant Rust. Sous Linux et
+/// macOS, l'équivalent est un droit du système de fichiers ou une capacité, pas un privilège
+/// nommé : ces variants n'y ont pas de sens, et le code les déclare indisponibles (ADR-009).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Privilege {
+    /// `SeProfileSingleProcessPrivilege` — interroger les listes de pages du noyau.
+    ProfileSingleProcess,
+    /// `SeIncreaseQuotaPrivilege` — réduire l'ensemble de travail d'un autre processus.
+    IncreaseQuota,
+    /// `SeIncreaseWorkingSetPrivilege` — agrandir son propre ensemble de travail.
+    IncreaseWorkingSet,
+    /// `SeDebugPrivilege` — agir sur les processus d'autres utilisateurs.
+    Debug,
+}
+
+impl Privilege {
+    /// Nom Windows du privilège, tel qu'il apparaît dans les journaux.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::ProfileSingleProcess => "SeProfileSingleProcessPrivilege",
+            Self::IncreaseQuota => "SeIncreaseQuotaPrivilege",
+            Self::IncreaseWorkingSet => "SeIncreaseWorkingSetPrivilege",
+            Self::Debug => "SeDebugPrivilege",
+        }
+    }
+
+    /// Vrai quand un utilisateur normal détient déjà ce privilège.
+    ///
+    /// Seul `SeIncreaseWorkingSetPrivilege` est accordé par défaut : c'est ce qui rend
+    /// l'optimisation de son propre processus possible sans élévation, et ce qui sépare les
+    /// opérations « utilisateur » des opérations « administrateur » (FR-MEM-5).
+    pub const fn held_by_default(self) -> bool {
+        matches!(self, Self::IncreaseWorkingSet)
+    }
+
+    /// Tous les privilèges connus.
+    pub const ALL: [Self; 4] = [
+        Self::ProfileSingleProcess,
+        Self::IncreaseQuota,
+        Self::IncreaseWorkingSet,
+        Self::Debug,
+    ];
+}
+
 /// Ce qu'un système sait faire d'une zone, **pour le nettoyage**.
 ///
 /// La mesure est un autre axe : macOS mesure parfaitement la mémoire
@@ -256,5 +303,31 @@ mod tests {
         unique.sort_unstable();
         unique.dedup();
         assert_eq!(unique.len(), codes.len(), "deux erreurs partagent un code");
+    }
+
+    #[test]
+    fn only_one_privilege_is_held_by_default() {
+        // C'est la frontière entre ce qu'un utilisateur peut faire sans élévation et le reste :
+        // la déplacer sans le savoir changerait ce que l'interface promet.
+        let default: Vec<Privilege> = Privilege::ALL
+            .into_iter()
+            .filter(|privilege| privilege.held_by_default())
+            .collect();
+        assert_eq!(default, [Privilege::IncreaseWorkingSet]);
+    }
+
+    #[test]
+    fn privilege_names_are_windows_names_and_unique() {
+        let names: Vec<&str> = Privilege::ALL.iter().map(|p| p.as_str()).collect();
+        let mut unique = names.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(
+            unique.len(),
+            names.len(),
+            "deux privilèges partagent un nom"
+        );
+        assert!(names.iter().all(|name| name.starts_with("Se")));
+        assert!(names.iter().all(|name| name.ends_with("Privilege")));
     }
 }

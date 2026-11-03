@@ -8,7 +8,9 @@
 //! Les doublures vivent dans le crate de production parce que le noyau et la couche `sys`
 //! les partagent ; elles ne sont pas destinées à un binaire livré.
 
-use obliniscor_core::MemoryZone;
+use obliniscor_core::{MemoryZone, Privilege};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::{
     CleanReport, DiskInventory, MemoryCleaner, MemoryProbe, MemorySnapshot, PlatformError,
@@ -161,5 +163,80 @@ impl DiskInventory for FakeVolumes {
             return Err(PlatformError::Denied(DENIED_MESSAGE.to_owned()));
         }
         Ok(self.volumes.clone())
+    }
+}
+
+/// Trace d'une acquisition ou d'une restitution, lisible par les tests.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrivilegeEvent {
+    /// Le garde a été créé avec ces privilèges.
+    Acquired,
+    /// Le garde est tombé et a rendu ces privilèges.
+    Released,
+}
+
+/// Doublure de la capacité d'activation de privilèges.
+///
+/// Elle rend le contrat vérifiable sans le système : ce qui est acquis est **tracé**, et ce qui
+/// tombe est tracé aussi. C'est le seul moyen de prouver ici que le chemin d'erreur ne laisse
+/// rien actif — sur une session élevée, Windows accorde tout, et la branche « privilège
+/// manquant » ne s'exécute jamais.
+#[derive(Debug, Clone, Default)]
+pub struct FakePrivileges {
+    held: Vec<Privilege>,
+    log: Rc<RefCell<Vec<PrivilegeEvent>>>,
+}
+
+impl FakePrivileges {
+    /// Fixe les privilèges que le faux jeton porte.
+    pub fn with_held(mut self, held: impl IntoIterator<Item = Privilege>) -> Self {
+        self.held = held.into_iter().collect();
+        self
+    }
+
+    /// Trace enregistrée jusqu'ici.
+    pub fn events(&self) -> Vec<PrivilegeEvent> {
+        self.log.borrow().clone()
+    }
+}
+
+/// Garde rendu par [`FakePrivileges`], qui trace sa chute.
+pub struct FakeEnabledPrivileges {
+    log: Rc<RefCell<Vec<PrivilegeEvent>>>,
+    enabled: Vec<Privilege>,
+}
+
+impl super::EnabledPrivileges for FakeEnabledPrivileges {
+    fn enabled(&self) -> &[Privilege] {
+        &self.enabled
+    }
+}
+
+impl Drop for FakeEnabledPrivileges {
+    fn drop(&mut self) {
+        self.log.borrow_mut().push(PrivilegeEvent::Released);
+    }
+}
+
+impl super::Privileges for FakePrivileges {
+    fn acquire(
+        &self,
+        privileges: &[Privilege],
+    ) -> Result<Box<dyn super::EnabledPrivileges>, super::PlatformError> {
+        // Atomique, comme l'implémentation réelle : un seul privilège manquant et rien n'est
+        // activé.
+        if let Some(missing) = privileges
+            .iter()
+            .find(|privilege| !self.held.contains(privilege))
+        {
+            return Err(super::PlatformError::MissingPrivilege(*missing));
+        }
+        if !privileges.is_empty() {
+            self.log.borrow_mut().push(PrivilegeEvent::Acquired);
+        }
+        Ok(Box::new(FakeEnabledPrivileges {
+            log: Rc::clone(&self.log),
+            enabled: privileges.to_vec(),
+        }))
     }
 }

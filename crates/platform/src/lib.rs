@@ -26,7 +26,7 @@ pub mod fakes;
 // Les modèles vivent dans le noyau : `obliniscor-platform` ne définit que les **traits** et
 // leurs doublures. Les réexporter ici évite aux appelants de dépendre du noyau pour lire un
 // simple instantané, et laisse une seule définition, celle que le noyau documente.
-pub use obliniscor_core::{CleanReport, MemorySnapshot, ProcessInfo, Volume};
+pub use obliniscor_core::{CleanReport, MemorySnapshot, Privilege, ProcessInfo, Volume};
 /// Erreur d'un backend de la frontière système.
 ///
 /// Trois causes seulement, distinctes pour l'utilisateur comme pour le noyau :
@@ -43,6 +43,13 @@ pub enum PlatformError {
     /// Le système a refusé l'opération faute de droits.
     #[error("accès refusé : {0}")]
     Denied(String),
+    /// Le privilège demandé n'est pas détenu par le processus et ne peut pas être activé.
+    ///
+    /// Distinct de [`PlatformError::Denied`] : ici, le processus n'a pas le droit **du tout**,
+    /// ce n'est pas une opération refusée à un moment donné. L'interface peut donc le dire
+    /// avant l'action, et proposer l'élévation, au lieu d'échouer au milieu (FR-MEM-5).
+    #[error("privilège non détenu : {}", .0.as_str())]
+    MissingPrivilege(Privilege),
     /// L'opération a échoué pour une autre raison, décrite par le backend.
     #[error("échec de l'opération système : {0}")]
     Failed(String),
@@ -79,4 +86,33 @@ pub trait ProcessControl {
 pub trait DiskInventory {
     /// Liste les volumes montés sur le système.
     fn volumes(&self) -> Result<Vec<Volume>, PlatformError>;
+}
+
+/// Un jeu de privilèges activés, **rendus quand il tombe**.
+///
+/// Le trait existe pour que la règle « un privilège activé est toujours rendu » soit
+/// vérifiable sans le système : une doublure compte les acquisitions et les restitutions, et
+/// un test peut prouver que le chemin d'erreur rend ce qu'il a pris (FR-SVC-6).
+///
+/// L'implémentation réelle ne peut pas être oubliée : elle rend les privilèges dans `Drop`,
+/// pas dans un `release()` que l'appelant pourrait sauter.
+pub trait EnabledPrivileges {
+    /// Privilèges réellement activés, dans l'ordre de la demande.
+    fn enabled(&self) -> &[Privilege];
+}
+
+/// Capacité d'activation temporaire de privilèges.
+///
+/// Sous Windows, un privilège n'est actif que si le processus l'a **et** l'active : la
+/// demande peut donc échouer alors que l'utilisateur est administrateur, si le jeton ne le
+/// porte pas. Le résultat est un objet dont la chute rend tout ce qui a été pris.
+pub trait Privileges {
+    /// Active tous les privilèges demandés, ou aucun.
+    ///
+    /// Atomique : si un seul manque, rien n'est laissé actif et
+    /// [`PlatformError::MissingPrivilege`] nomme le premier refusé.
+    fn acquire(
+        &self,
+        privileges: &[Privilege],
+    ) -> Result<Box<dyn EnabledPrivileges>, PlatformError>;
 }

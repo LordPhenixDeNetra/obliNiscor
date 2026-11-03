@@ -55,7 +55,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
 | B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert | --- |
 | P0 Cadrage et spikes | 10 | 3 | 0 | 0 | 2 | 5 | 0 | 50 % |
-| P1 Fondations | 10 | 2 | 0 | 4 | 0 | 4 | 0 | 45 % |
+| P1 Fondations | 10 | 2 | 0 | 4 | 0 | 4 | 0 | 50 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -113,8 +113,8 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-014 | Garde RAII de privilèges | Fait | — | 1 | 1 | 012 | `Privilege` (noyau), trait `Privileges` (frontière), garde `Drop` Windows ; 6 tests, première dérogation `unsafe` |
 | OBL-015 | Intégration des libs, réglages v1 | Fait | — | 2 | 1,5 | 011 | `obliniscor-store` : schéma v1 via `lpdnsoft-settings`, récupération après corruption, 8 tests ; `lpdnsoft-log` attend le premier binaire |
 | OBL-016 | Historique JSONL | En revue | — | 1,5 | 1,5 | 015 | `history.jsonl` : une ligne autonome par entrée, relecture tolérante, élagage atomique ; 7 tests |
-| OBL-017 | Service Windows | En revue | — | 3 | 1,5 | 008, 014 | `obliniscor-service` : répartition des messages, privilège activé seulement pour une action réelle, erreurs traduites en codes stables ; 11 tests sans système |
-| OBL-018 | Serveur et client IPC | À faire | — | 3 | — | 013, 017 |  |
+| OBL-017 | Service Windows | Fait | — | 3 | 1,5 | 008, 014 | `obliniscor-service` : répartition des messages, privilège activé seulement pour une action réelle, erreurs traduites en codes stables ; 11 tests sans système |
+| OBL-018 | Serveur et client IPC | En revue | — | 3 | 2 | 013, 017 | Reply dans proto (cadrage générique), canal nommé dans sys (SDDL SY+IU), boucle de service ; 2 tests de bout en bout sur un vrai canal |
 | OBL-019 | CLI squelette | À faire | — | 1,5 | — | 018 |  |
 | OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | En revue | — | 3 | 2,5 | 011 | `sys` (6 tests) + CI trois OS + **ARM64 Linux et Windows** ; l'empaquetage continu passe à OBL-111, faute de binaire à empaqueter |
 
@@ -259,6 +259,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | OBL-018 | Premier aller-retour réel : le client encode, le service lit, répond et le client décode, sur un canal nommé Windows. Deux bugs trouvés par le test : le serveur se déconnectait avant la lecture du client (erreur 233), et le canal retirait l'en-tête alors que `proto::decode` attend une trame complète. Le canal transporte désormais des trames opaques. | — | PR « feat(ipc): serve and answer over a named pipe » |
 | 2026-11-03 | OBL-017 | Le service commence par sa décision : quel message appelle quelle capacité, quels privilèges activer, comment traduire un échec. Une simulation ne demande aucun droit, puisqu elle ne touche à rien. Onze tests avec les doublures, aucun accès système. | — | PR « feat(service): dispatch the requests » |
 | 2026-11-03 | OBL-008 | Spike du canal nommé : l'ACL est appliquée **dès la création**, et un client refusé échoue en erreur 5 — donc traduisible en `E_DENIED`. Découverte : `OW` désignerait le système pour un service `LocalSystem` ; le descripteur doit nommer `SY` et `IU`. OBL-017 à 019 sont débloquées. | — | PR « feat(spike): prove the named pipe refusal » |
 | 2026-11-03 | OBL-016 | Historique JSONL : une ligne corrompue ne coûte que cette ligne, et l'élagage passe par `lpdnsoft-atomic` — jamais un fichier à moitié réécrit. Le code d'erreur est stocké sous sa forme chaîne, qui est le contrat (`E_DENIED`), et non sous forme d'énuméré. | — | PR « feat(store): keep a JSONL history » |

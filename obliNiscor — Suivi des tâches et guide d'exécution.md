@@ -55,7 +55,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
 | B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert | --- |
 | P0 Cadrage et spikes | 10 | 4 | 0 | 0 | 2 | 4 | 0 | 40 % |
-| P1 Fondations | 10 | 6 | 0 | 2 | 0 | 2 | 0 | 24 % |
+| P1 Fondations | 10 | 5 | 0 | 3 | 0 | 2 | 0 | 29 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -65,7 +65,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **73** | **0** | **2** | **2** | **6** | **5** | **13 %** |
+| **Total** | **88** | **72** | **0** | **3** | **2** | **6** | **5** | **14 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -110,7 +110,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-011 | `obliniscor-core` | En revue | — | 2 | 1,5 | 010 | modèles (`MemorySnapshot`, `CleanReport`, `ProcessInfo`, `Volume`), `MemoryZone` avec noms d'IPC, `ErrorCode` stable ; 7 tests |
 | OBL-012 | `obliniscor-platform` | Fait | — | 1,5 | 1,5 | 011 | 4 traits de capacité, 3 doublures, 4 tests (PR #4) |
 | OBL-013 | `obliniscor-proto` | Fait | — | 2,5 | 2,5 | 011 | cadrage u32+JSON, bornes 1 Mio, 12 tests (PR #4) |
-| OBL-014 | Garde RAII de privilèges | À faire | — | 1 | — | 012 |  |
+| OBL-014 | Garde RAII de privilèges | En revue | — | 1 | 1 | 012 | `Privilege` (noyau), trait `Privileges` (frontière), garde `Drop` Windows ; 6 tests, première dérogation `unsafe` |
 | OBL-015 | Intégration des libs, réglages v1 | À faire | — | 2 | — | 011 |  |
 | OBL-016 | Historique JSONL | À faire | — | 1,5 | — | 015 |  |
 | OBL-017 | Service Windows | À faire | — | 3 | — | 008, 014 |  |
@@ -259,6 +259,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | OBL-014 | Premier `unsafe` du projet, dans `obliniscor-sys` et nulle part ailleurs : le garde rend les privilèges dans `Drop`, donc un chemin d'erreur ne peut pas les laisser actifs. Six tests, dont un qui accepte les deux issues (jeton administrateur ou non) sans jamais tolérer un échec générique. | — | PR « feat(sys): activate privileges for the length of an operation » |
 | 2026-11-01 | OBL-005, OBL-006 | Les deux spikes passent **Bloqué** : ce qui manque n'est pas du travail mais des machines (macOS, Windows 10, Linux pour le stockage). `docs/spikes/procedures.md` donne les commandes exactes à exécuter, machine par machine, et deux lignes sont ouvertes au registre des blocages. | — | PR « docs: procedure for the missing machines » |
 | 2026-11-01 | OBL-005 | Spike mémoire, second passage : backend Linux (binaire statique musl, rien installé dans le WSL) ; valeurs identiques à `free -b` à 0,03 % près. Troisième piège : `buff/cache` = Buffers + Cached + SReclaimable. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-005 | Spike mémoire commencé : outil jetable `spikes/memoire` (lecture seule) et mesures réelles sur Windows 11. Deux pièges trouvés : `GetPerformanceInfo` compte en pages, et aucune API « publique » ne donne la mémoire libre. | — | `docs/spikes/memoire.md` |

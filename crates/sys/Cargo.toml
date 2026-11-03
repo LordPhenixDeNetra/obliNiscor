@@ -7,8 +7,20 @@ license.workspace = true
 repository.workspace = true
 description = "Couche système d'obliNiscor : la seule qui parle au système, un module par OS (ADR-004)"
 
-[lints]
-workspace = true
+# Les lints du workspace sont recopiés au lieu d'être hérités : Cargo interdit d'hériter
+# (`workspace = true`) **et** de surcharger un lint dans le même manifeste. La seule différence
+# avec les autres crates est `unsafe_code`, autorisé ici et nulle part ailleurs (SEC-9).
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+# Clippy et non rustc : chaque bloc unsafe doit porter son commentaire SAFETY:.
+undocumented_unsafe_blocks = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+dbg_macro = "deny"
+todo = "deny"
 
 [dependencies]
 obliniscor-core = { workspace = true }
+obliniscor-platform = { workspace = true }

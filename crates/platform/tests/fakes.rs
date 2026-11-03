@@ -193,3 +193,48 @@ fn fakes_are_injectable_behind_trait_objects() {
         }
     );
 }
+
+#[test]
+fn privileges_are_released_when_the_guard_falls() {
+    use obliniscor_core::Privilege;
+    use obliniscor_platform::Privileges;
+    use obliniscor_platform::fakes::{FakePrivileges, PrivilegeEvent};
+
+    // Le cas dangereux du cahier des charges : un privilège activé qui n'est pas rendu.
+    let fake = FakePrivileges::default().with_held([Privilege::IncreaseWorkingSet]);
+    {
+        let guard = fake
+            .acquire(&[Privilege::IncreaseWorkingSet])
+            .expect("le faux jeton le porte");
+        assert_eq!(guard.enabled(), [Privilege::IncreaseWorkingSet]);
+        assert_eq!(fake.events(), [PrivilegeEvent::Acquired]);
+    }
+    // La chute du garde est la seule restitution : elle est tracée.
+    assert_eq!(
+        fake.events(),
+        [PrivilegeEvent::Acquired, PrivilegeEvent::Released]
+    );
+}
+
+#[test]
+fn a_missing_privilege_activates_nothing() {
+    use obliniscor_core::Privilege;
+    use obliniscor_platform::PlatformError;
+    use obliniscor_platform::Privileges;
+    use obliniscor_platform::fakes::{FakePrivileges, PrivilegeEvent};
+
+    // Demande de deux privilèges, un seul détenu : rien ne doit rester actif, et l'erreur doit
+    // nommer celui qui manque — pas un échec générique.
+    let fake = FakePrivileges::default().with_held([Privilege::IncreaseWorkingSet]);
+    let result = fake.acquire(&[
+        Privilege::IncreaseWorkingSet,
+        Privilege::ProfileSingleProcess,
+    ]);
+    assert_eq!(
+        result.err(),
+        Some(PlatformError::MissingPrivilege(
+            Privilege::ProfileSingleProcess
+        ))
+    );
+    assert_eq!(fake.events(), [PrivilegeEvent::Acquired; 0]);
+}

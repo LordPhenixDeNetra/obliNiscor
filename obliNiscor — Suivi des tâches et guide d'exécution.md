@@ -53,7 +53,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | P0 Cadrage et spikes | 10 | 3 | 0 | 0 | 2 | 5 | 0 | 50 % |
-| P1 Fondations | 10 | 1 | 0 | 4 | 0 | 5 | 0 | 50 % |
+| P1 Fondations | 10 | 0 | 0 | 3 | 0 | 7 | 0 | 65 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **67** | **0** | **4** | **2** | **10** | **5** | **20 %** |
+| **Total** | **88** | **66** | **0** | **3** | **2** | **12** | **5** | **23 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -112,9 +112,9 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-015 | Intégration des libs, réglages v1 | Fait | — | 2 | 1,5 | 011 | `obliniscor-store` : schéma v1 via `lpdnsoft-settings`, récupération après corruption, 8 tests ; `lpdnsoft-log` attend le premier binaire |
 | OBL-016 | Historique JSONL | En revue | — | 1,5 | 1,5 | 015 | `history.jsonl` : une ligne autonome par entrée, relecture tolérante, élagage atomique ; 7 tests |
 | OBL-017 | Service Windows | Fait | — | 3 | 1,5 | 008, 014 | `obliniscor-service` : répartition des messages, privilège activé seulement pour une action réelle, erreurs traduites en codes stables ; 11 tests sans système |
-| OBL-018 | Serveur et client IPC | En revue | — | 3 | 2 | 013, 017 | Reply dans proto (cadrage générique), canal nommé dans sys (SDDL SY+IU), boucle de service ; 2 tests de bout en bout sur un vrai canal |
-| OBL-019 | CLI squelette | À faire | — | 1,5 | — | 018 |  |
-| OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | En revue | — | 3 | 2,5 | 011 | `sys` (6 tests) + CI trois OS + **ARM64 Linux et Windows** ; l'empaquetage continu passe à OBL-111, faute de binaire à empaqueter |
+| OBL-018 | Serveur et client IPC | Fait | — | 3 | 2 | 013, 017 | Reply dans proto (cadrage générique), canal nommé dans sys (SDDL SY+IU), boucle de service ; 2 tests de bout en bout sur un vrai canal |
+| OBL-019 | CLI squelette | En revue | — | 1,5 | 1 | 018 | `obliniscor-cli` : `status`, `config`, `version`, `--json` et codes de sortie documentés ; 12 tests, dont 6 sur le binaire lui-même |
+| OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | Fait | — | 3 | 2,5 | 011 | `sys` (6 tests) + CI trois OS + **ARM64 Linux et Windows** ; l'empaquetage continu passe à OBL-111, faute de binaire à empaqueter |
 
 ### P2 — Mémoire
 
@@ -258,6 +258,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | OBL-019 | Premier binaire : `obliniscor status`, `config` et `version`, avec `--json` et des codes de sortie qui distinguent « service injoignable » (3) de « accès refusé » (4). `config` réussit service arrêté, parce qu'elle sert justement à diagnostiquer. | — | PR « feat(cli): give the project its first binary » |
 | 2026-11-03 | OBL-018 | Premier aller-retour réel : le client encode, le service lit, répond et le client décode, sur un canal nommé Windows. Deux bugs trouvés par le test : le serveur se déconnectait avant la lecture du client (erreur 233), et le canal retirait l'en-tête alors que `proto::decode` attend une trame complète. Le canal transporte désormais des trames opaques. | — | PR « feat(ipc): serve and answer over a named pipe » |
 | 2026-11-03 | OBL-017 | Le service commence par sa décision : quel message appelle quelle capacité, quels privilèges activer, comment traduire un échec. Une simulation ne demande aucun droit, puisqu elle ne touche à rien. Onze tests avec les doublures, aucun accès système. | — | PR « feat(service): dispatch the requests » |
 | 2026-11-03 | OBL-008 | Spike du canal nommé : l'ACL est appliquée **dès la création**, et un client refusé échoue en erreur 5 — donc traduisible en `E_DENIED`. Découverte : `OW` désignerait le système pour un service `LocalSystem` ; le descripteur doit nommer `SY` et `IU`. OBL-017 à 019 sont débloquées. | — | PR « feat(spike): prove the named pipe refusal » |

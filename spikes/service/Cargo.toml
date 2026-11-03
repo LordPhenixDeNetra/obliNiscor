@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "spike-service"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Spike P0 : canal nommé et descripteur de sécurité sous Windows (jetable, hors production)"
+
+[dependencies]

@@ -54,7 +54,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | P0 Cadrage et spikes | 10 | 3 | 0 | 2 | 0 | 5 | 0 | 55 % |
 | P1 Fondations | 10 | 0 | 0 | 3 | 0 | 7 | 0 | 65 % |
-| P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
+| P2 Mémoire | 9 | 8 | 0 | 1 | 0 | 0 | 0 | 8 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P5 Stockage | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **66** | **0** | **5** | **0** | **12** | **5** | **24 %** |
+| **Total** | **88** | **65** | **0** | **6** | **0** | **12** | **5** | **26 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -120,7 +120,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 
 | ID | Tâche | Statut | Resp. | Est. | Réel | Dép. | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| OBL-020 | Lecture de l'état mémoire | À faire | — | 3 | — | 005, 012 |  |
+| OBL-020 | Lecture de l'état mémoire | En revue | — | 3 | 2 | 005, 012 | WindowsMemory implémente MemoryProbe (GlobalMemoryStatusEx + GetPerformanceInfo en pages converties) ; 4 tests de plausibilité ; MemorySnapshot.free devient Option |
 | OBL-021 | Défauts de page et pression disque | À faire | — | 1,5 | — | 020 |  |
 | OBL-022 | Nettoyage : working set, cache système, modifiée | À faire | — | 3 | — | 014, 020 |  |
 | OBL-023 | Nettoyage : standby, combinée, fichiers, registre | À faire | — | 3,5 | — | 022 |  |
@@ -258,6 +258,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | OBL-020 | La mémoire devient mesurable pour de vrai : MemorySnapshot.free passe en `Option`, parce que Windows ne l'expose pas sans la requête noyau — None dit « non mesuré », ce qui n'est pas zéro. WindowsMemory rend un instantané plausible, et quatre tests vérifient des cohérences plutôt que des chiffres, qui changeraient à chaque machine. | — | PR « feat(mem): read the memory state » |
 | 2026-11-03 | OBL-019 | Premier binaire : `obliniscor status`, `config` et `version`, avec `--json` et des codes de sortie qui distinguent « service injoignable » (3) de « accès refusé » (4). `config` réussit service arrêté, parce qu'elle sert justement à diagnostiquer. | — | PR « feat(cli): give the project its first binary » |
 | 2026-11-03 | OBL-018 | Premier aller-retour réel : le client encode, le service lit, répond et le client décode, sur un canal nommé Windows. Deux bugs trouvés par le test : le serveur se déconnectait avant la lecture du client (erreur 233), et le canal retirait l'en-tête alors que `proto::decode` attend une trame complète. Le canal transporte désormais des trames opaques. | — | PR « feat(ipc): serve and answer over a named pipe » |
 | 2026-11-03 | OBL-017 | Le service commence par sa décision : quel message appelle quelle capacité, quels privilèges activer, comment traduire un échec. Une simulation ne demande aucun droit, puisqu elle ne touche à rien. Onze tests avec les doublures, aucun accès système. | — | PR « feat(service): dispatch the requests » |

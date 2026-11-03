@@ -17,7 +17,7 @@ fn configured_snapshot() -> MemorySnapshot {
     MemorySnapshot {
         total: 32 * GIB,
         available: 12 * GIB,
-        free: 4 * GIB,
+        free: Some(4 * GIB),
     }
 }
 

@@ -16,6 +16,8 @@
 //! tables, pas pour les appels.
 
 #[cfg(windows)]
+pub mod memory;
+#[cfg(windows)]
 pub mod pipe;
 #[cfg(windows)]
 pub mod privilege;

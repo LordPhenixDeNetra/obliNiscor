@@ -1,0 +1,16 @@
+[package]
+name = "obliniscor-service"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Service d'obliNiscor : répartition des requêtes vers les capacités de la frontière (ADR-004)"
+
+[lints]
+workspace = true
+
+[dependencies]
+obliniscor-core = { workspace = true }
+obliniscor-platform = { workspace = true }
+obliniscor-proto = { workspace = true }

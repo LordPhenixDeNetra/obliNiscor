@@ -9,6 +9,8 @@
 //! ses valeurs soient vérifiées partout ; les appels réels (requête noyau, compteurs, registre)
 //! viendront avec les tâches des backends (ADR-004).
 
+pub mod privilege;
+
 use obliniscor_core::{Availability, MemoryZone};
 
 /// Disponibilité des zones mémoire sous Windows (matrice 6.0).

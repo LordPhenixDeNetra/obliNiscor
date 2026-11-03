@@ -12,10 +12,12 @@
 //! zone peut-elle être **nettoyée** ? » : macOS mesure la mémoire globale, mais ne nettoie
 //! aucune zone, donc toutes ses zones sont [`Availability::Unavailable`].
 //!
-//! `#![forbid(unsafe_code)]` reste actif : les appels système et la seule dérogation `unsafe`
-//! du projet viendront avec les tâches des backends, pas avant (SEC-9).
+//! La gestion des privilèges ([`windows::privilege`]) est la première incursion d'`unsafe` :
+//! elle est dérogatoire, limitée à ce crate, et chaque bloc porte sa justification `SAFETY:`
+//! (`undocumented_unsafe_blocks` est en erreur, SEC-9).
 
-#![forbid(unsafe_code)]
+// `unsafe` est permis dans ce crate et **seulement** dans ce crate (AGENTS.md, SEC-9).
+#![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod linux;
 pub mod macos;

@@ -152,6 +152,7 @@ name = "obliniscor-sys"
 version = "0.1.0"
 dependencies = [
  "obliniscor-core",
+ "obliniscor-platform",
 ]
 
 [[package]]

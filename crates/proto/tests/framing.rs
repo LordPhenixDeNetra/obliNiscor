@@ -9,7 +9,7 @@ use obliniscor_proto::{
 
 /// Décode en exigeant la réussite : un refus est un échec du test, avec sa cause en clair.
 fn decode_ok(frame: &[u8]) -> Message {
-    match decode(frame) {
+    match decode::<Message>(frame) {
         Ok(message) => message,
         Err(error) => panic!("trame refusée : {error}"),
     }
@@ -17,7 +17,7 @@ fn decode_ok(frame: &[u8]) -> Message {
 
 /// Décode en exigeant le refus : une acceptation est un échec du test.
 fn decode_err(frame: &[u8]) -> ProtoError {
-    match decode(frame) {
+    match decode::<Message>(frame) {
         Ok(message) => panic!("trame acceptée à tort : {message:?}"),
         Err(error) => error,
     }

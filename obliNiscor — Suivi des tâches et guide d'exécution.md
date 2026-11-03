@@ -54,8 +54,8 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
 | B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert | --- |
-| P0 Cadrage et spikes | 10 | 3 | 0 | 1 | 2 | 4 | 0 | 45 % |
-| P1 Fondations | 10 | 3 | 0 | 3 | 0 | 4 | 0 | 38 % |
+| P0 Cadrage et spikes | 10 | 3 | 0 | 0 | 2 | 5 | 0 | 50 % |
+| P1 Fondations | 10 | 2 | 0 | 4 | 0 | 4 | 0 | 45 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -65,7 +65,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **69** | **0** | **4** | **2** | **8** | **5** | **18 %** |
+| **Total** | **88** | **68** | **0** | **4** | **2** | **9** | **5** | **19 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -99,7 +99,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-005 | Spike mémoire | Bloqué | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
 | OBL-006 | Spike stockage | Bloqué | — | 1,5 | 0,5 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
-| OBL-008 | Spike service et canal nommé | En revue | — | 1,5 | 0,5 | 003 | `docs/spikes/service.md` : ACL posée à la création, refus en erreur 5 ; le descripteur du service doit nommer `SY` et `IU`, pas `OW` |
+| OBL-008 | Spike service et canal nommé | Fait | — | 1,5 | 0,5 | 003 | `docs/spikes/service.md` : ACL posée à la création, refus en erreur 5 ; le descripteur du service doit nommer `SY` et `IU`, pas `OW` |
 | OBL-009 | Protocole de mesure, machines A–H | À faire | — | 1,5 | — | 003 |  |
 | OBL-010 | Revue de phase, go/no-go | À faire | — | 0,5 | — | 005–009 |  |
 
@@ -113,7 +113,7 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-014 | Garde RAII de privilèges | Fait | — | 1 | 1 | 012 | `Privilege` (noyau), trait `Privileges` (frontière), garde `Drop` Windows ; 6 tests, première dérogation `unsafe` |
 | OBL-015 | Intégration des libs, réglages v1 | Fait | — | 2 | 1,5 | 011 | `obliniscor-store` : schéma v1 via `lpdnsoft-settings`, récupération après corruption, 8 tests ; `lpdnsoft-log` attend le premier binaire |
 | OBL-016 | Historique JSONL | En revue | — | 1,5 | 1,5 | 015 | `history.jsonl` : une ligne autonome par entrée, relecture tolérante, élagage atomique ; 7 tests |
-| OBL-017 | Service Windows | À faire | — | 3 | — | 008, 014 |  |
+| OBL-017 | Service Windows | En revue | — | 3 | 1,5 | 008, 014 | `obliniscor-service` : répartition des messages, privilège activé seulement pour une action réelle, erreurs traduites en codes stables ; 11 tests sans système |
 | OBL-018 | Serveur et client IPC | À faire | — | 3 | — | 013, 017 |  |
 | OBL-019 | CLI squelette | À faire | — | 1,5 | — | 018 |  |
 | OBL-100 | Socle multi-plateforme (`obliniscor-sys`, CI trois OS) | En revue | — | 3 | 2,5 | 011 | `sys` (6 tests) + CI trois OS + **ARM64 Linux et Windows** ; l'empaquetage continu passe à OBL-111, faute de binaire à empaqueter |
@@ -259,6 +259,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | OBL-017 | Le service commence par sa décision : quel message appelle quelle capacité, quels privilèges activer, comment traduire un échec. Une simulation ne demande aucun droit, puisqu elle ne touche à rien. Onze tests avec les doublures, aucun accès système. | — | PR « feat(service): dispatch the requests » |
 | 2026-11-03 | OBL-008 | Spike du canal nommé : l'ACL est appliquée **dès la création**, et un client refusé échoue en erreur 5 — donc traduisible en `E_DENIED`. Découverte : `OW` désignerait le système pour un service `LocalSystem` ; le descripteur doit nommer `SY` et `IU`. OBL-017 à 019 sont débloquées. | — | PR « feat(spike): prove the named pipe refusal » |
 | 2026-11-03 | OBL-016 | Historique JSONL : une ligne corrompue ne coûte que cette ligne, et l'élagage passe par `lpdnsoft-atomic` — jamais un fichier à moitié réécrit. Le code d'erreur est stocké sous sa forme chaîne, qui est le contrat (`E_DENIED`), et non sous forme d'énuméré. | — | PR « feat(store): keep a JSONL history » |
 | 2026-11-03 | OBL-015 | Premier état persistant : réglages v1 dans `obliniscor-store`, avec la mécanique de `lpdnsoft-settings` plutôt qu'une réimplémentation. La simulation est le défaut : l'outil ne détruit rien tant qu'on ne l'a pas demandé. Licence MPL-2.0 d'`option-ext` (transitive) explicitée dans `deny.toml`. | — | PR « feat(store): version the settings » |

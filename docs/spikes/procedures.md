@@ -23,8 +23,8 @@ Sur un Mac (Intel ou Apple Silicon, macOS 12 ou plus récent) :
 sw_vers
 sysctl -n machdep.cpu.brand_string
 
-# Mémoire, deux mesures espacées de 2 s
-vm_stat 1 2
+# Mémoire, deux mesures espacées d'une seconde
+vm_stat -c 2 1
 sysctl -n hw.memsize
 sysctl -n hw.pagesize
 

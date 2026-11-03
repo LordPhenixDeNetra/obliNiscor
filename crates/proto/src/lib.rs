@@ -14,6 +14,7 @@
 //! Rien de ce qui vient de l'extérieur ne provoque de panic : un service qui panique se coupe,
 //! et c'est exactement ce qu'un attaquant cherche.
 
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 /// Numéro du protocole, indépendant de la version de l'application.
@@ -101,6 +102,56 @@ pub enum ProtoError {
     },
 }
 
+/// Réponse du service à un [`Message`].
+///
+/// Elle circule dans le **même cadrage** que les demandes : une longueur en `u32` puis du JSON.
+/// Séparer les deux types plutôt que d'ajouter des variants à `Message` évite qu'un client
+/// envoie une réponse ou qu'un service reçoive une progression.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "reply", rename_all = "kebab-case")]
+pub enum Reply {
+    /// État de la mémoire, en octets.
+    Status {
+        /// Mémoire physique totale.
+        total: u64,
+        /// Mémoire disponible pour de nouvelles allocations.
+        available: u64,
+        /// Mémoire libre.
+        free: u64,
+    },
+    /// Processus visibles.
+    Processes {
+        /// Liste, ordonnée par identifiant croissant.
+        processes: Vec<ProcessSummary>,
+    },
+    /// Résultat d'un nettoyage, réel ou simulé.
+    Cleaned {
+        /// Octets libérés ; zéro pour une simulation.
+        freed: u64,
+        /// Zones traitées, par leur nom d'IPC.
+        zones: Vec<String>,
+    },
+    /// L'opération a échoué.
+    Failed {
+        /// Code stable (`E_DENIED`, `E_UNAVAILABLE`, …), indépendant de la langue.
+        code: String,
+    },
+}
+
+/// Un processus dans une réponse, réduit à ce que l'interface affiche.
+///
+/// Recopié ici plutôt que d'importer le type du noyau : le protocole est un **contrat de fil**,
+/// et il ne doit pas changer parce que le noyau renomme un champ. La conversion se fait dans le
+/// service, à un seul endroit.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProcessSummary {
+    /// Identifiant du processus.
+    pub pid: u32,
+    /// Nom du processus, tel que le système le fournit.
+    pub name: String,
+    /// Ensemble de travail, en octets.
+    pub working_set: u64,
+}
 /// Encode un message en une trame complète : longueur en `u32` little-endian, puis JSON.
 ///
 /// La longueur est celle de la charge seule, préfixe exclu ; [`decode`] s'en sert pour refuser
@@ -117,9 +168,8 @@ pub enum ProtoError {
 /// [`ProtoError::FrameTooLarge`] si la charge sérialisée dépasse [`MAX_FRAME`] ; la trame n'est
 /// alors jamais construite. [`ProtoError::InvalidJson`] si l'écriture JSON échoue, ce que
 /// [`Message`] ne permet pas aujourd'hui, mais qu'il faut représenter sans panic.
-pub fn encode(message: &Message) -> Result<Vec<u8>, ProtoError> {
-    let payload =
-        serde_json::to_vec(message).map_err(|source| ProtoError::InvalidJson { source })?;
+pub fn encode<T: Serialize + ?Sized>(value: &T) -> Result<Vec<u8>, ProtoError> {
+    let payload = serde_json::to_vec(value).map_err(|source| ProtoError::InvalidJson { source })?;
     if payload.len() > MAX_FRAME {
         return Err(ProtoError::FrameTooLarge {
             declared: payload.len(),
@@ -147,7 +197,7 @@ pub fn encode(message: &Message) -> Result<Vec<u8>, ProtoError> {
 /// [`ProtoError::TruncatedPayload`] et [`ProtoError::TrailingBytes`] refusent une trame dont
 /// les octets ne correspondent pas à son annonce ; [`ProtoError::InvalidJson`] refuse une
 /// charge qui n'est pas un message du protocole.
-pub fn decode(frame: &[u8]) -> Result<Message, ProtoError> {
+pub fn decode<T: DeserializeOwned>(frame: &[u8]) -> Result<T, ProtoError> {
     let (header, payload) =
         frame
             .split_at_checked(HEADER_LEN)

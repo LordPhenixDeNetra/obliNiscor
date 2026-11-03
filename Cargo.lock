@@ -270,6 +270,7 @@ dependencies = [
  "obliniscor-core",
  "obliniscor-platform",
  "obliniscor-proto",
+ "obliniscor-sys",
 ]
 
 [[package]]

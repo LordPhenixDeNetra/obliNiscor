@@ -9,11 +9,14 @@
 //! ses valeurs soient vérifiées partout ; les appels réels (requête noyau, compteurs, registre)
 //! viendront avec les tâches des backends (ADR-004).
 //!
-//! **Sauf la FFI.** [`privilege`] lie `advapi32` et `kernel32` : ces bibliothèques n'existent
-//! pas sous Linux ni macOS, et un `cargo test` les chercherait à l'édition de liens de chaque
-//! binaire de test. Le module est donc compilé **uniquement** sous Windows — c'est la fin de la
-//! règle « tout est compilé partout », qui vaut pour les tables, pas pour les appels.
+//! **Sauf la FFI.** [`privilege`] et [`pipe`] lient `advapi32` et `kernel32` : ces
+//! bibliothèques n'existent pas sous Linux ni macOS, et un `cargo test` les chercherait à
+//! l'édition de liens de chaque binaire de test. Ces modules sont donc compilés **uniquement**
+//! sous Windows — c'est la fin de la règle « tout est compilé partout », qui vaut pour les
+//! tables, pas pour les appels.
 
+#[cfg(windows)]
+pub mod pipe;
 #[cfg(windows)]
 pub mod privilege;
 

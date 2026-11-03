@@ -4,6 +4,8 @@
 //! faire passer avant de livrer. Chaque étape est celle que la CI exécute, dans le même ordre,
 //! pour qu'un échec local soit un échec distant.
 
+mod tracking;
+
 use anyhow::{Context, Result, bail};
 use std::path::Path;
 use std::process::Command;
@@ -48,6 +50,7 @@ fn ci() -> Result<()> {
     }
 
     check_i18n()?;
+    check_tracking()?;
 
     for args in STEPS {
         let shown = format!("cargo {}", args.join(" "));
@@ -88,4 +91,43 @@ fn check_i18n() -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Vérifie la cohérence du document de suivi.
+///
+/// Le suivi est un fichier texte ; un fichier texte se désynchronise. Ces contrôles attrapent
+/// les erreurs qu'un relecteur chercherait à l'œil : un total qui ne tombe pas juste, une tâche
+/// bloquée sans ligne au registre, un journal daté à l'envers.
+fn check_tracking() -> Result<()> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+    let path = find_tracking_document(&root)?;
+    eprintln!("==> suivi : {}", path.display());
+
+    let content =
+        std::fs::read_to_string(&path).with_context(|| format!("lecture de {}", path.display()))?;
+    let tracking =
+        tracking::parse(&content).with_context(|| format!("analyse de {}", path.display()))?;
+    tracking::verify(&tracking).context("le document de suivi est incohérent")?;
+    Ok(())
+}
+
+/// Trouve le document de suivi à la racine du dépôt.
+///
+/// Le nom contient une ponctuation que les systèmes de fichiers traitent différemment : on
+/// cherche donc un `.md` dont le nom porte « Suivi des tâches », plutôt que de figer une
+/// orthographe.
+fn find_tracking_document(root: &Path) -> Result<std::path::PathBuf> {
+    let entries =
+        std::fs::read_dir(root).with_context(|| format!("lecture de {}", root.display()))?;
+    for entry in entries {
+        let path = entry?.path();
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default();
+        if name.ends_with(".md") && name.contains("Suivi des t") {
+            return Ok(path);
+        }
+    }
+    bail!("document de suivi introuvable à la racine du dépôt");
 }

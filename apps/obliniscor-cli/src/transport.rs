@@ -6,7 +6,11 @@ use obliniscor_platform::PlatformError;
 #[cfg(windows)]
 pub use windows_impl::ask_status;
 
-/// Nom du canal du service, sans le préfixe `\\.\pipe\`.
+/// Nom du canal du service, sans le préfixe de pipe.
+///
+/// Windows seulement : sous Linux et macOS, il n'y a pas encore de transport, et une constante
+/// inutilisée serait du code mort que clippy refuse (-D warnings).
+#[cfg(windows)]
 pub const PIPE_NAME: &str = "obliniscord";
 
 #[cfg(windows)]

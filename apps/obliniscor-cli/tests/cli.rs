@@ -77,17 +77,20 @@ fn config_works_without_the_service() {
 }
 
 #[test]
-fn status_without_a_service_exits_with_the_unreachable_code() {
-    // Aucun service ne tourne pendant les tests : le client doit le dire avec son code dédié,
-    // et non avec un échec générique.
+fn status_without_a_service_exits_with_a_dedicated_code() {
+    // Le code doit dire *pourquoi* : un service arrêté (3) et une fonction absente du système
+    // (5) sont deux situations différentes, et c'est tout l'intérêt d'avoir plusieurs codes.
     let output = run(&["status", "--json"]);
     let code = output.status.code().unwrap_or(-1);
-    assert_eq!(
-        code,
-        3,
-        "code {code}, erreur : {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    let value: serde_json::Value = serde_json::from_str(stdout(&output).trim()).expect("JSON");
-    assert_eq!(value["error"]["code"], "E_FAILED");
+    let text = stdout(&output);
+    let value: serde_json::Value = serde_json::from_str(text.trim()).expect("JSON");
+
+    if cfg!(windows) {
+        assert_eq!(code, 3, "service injoignable, reçu {code} : {text}");
+        assert_eq!(value["error"]["code"], "E_FAILED");
+    } else {
+        // Hors Windows, l'IPC n'existe pas encore : c'est une indisponibilité, pas une panne.
+        assert_eq!(code, 5, "fonction indisponible, reçu {code} : {text}");
+        assert_eq!(value["error"]["code"], "E_UNAVAILABLE");
+    }
 }

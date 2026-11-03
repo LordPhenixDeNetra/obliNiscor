@@ -128,12 +128,15 @@ fn status(format: Format) -> Outcome {
     match crate::transport::ask_status() {
         Ok(snapshot) => Outcome::success(render_status(format, &snapshot)),
         Err(error) => {
-            let (code, message) = match &error {
-                obliniscor_platform::PlatformError::Denied(_) => {
-                    (ErrorCode::Denied, error.to_string())
-                }
-                other => (ErrorCode::Failed, other.to_string()),
+            // Le code vient de la nature de l'échec, pas du texte du message : une fonction
+            // absente du système n'est pas une panne, et n'a donc pas le même code de sortie.
+            let code = match &error {
+                obliniscor_platform::PlatformError::Unavailable(_) => ErrorCode::Unavailable,
+                obliniscor_platform::PlatformError::Denied(_)
+                | obliniscor_platform::PlatformError::MissingPrivilege(_) => ErrorCode::Denied,
+                obliniscor_platform::PlatformError::Failed(_) => ErrorCode::Failed,
             };
+            let message = error.to_string();
             let exit = if message.contains("connexion au canal") {
                 EXIT_UNREACHABLE
             } else {

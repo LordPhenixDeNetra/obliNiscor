@@ -151,14 +151,27 @@ fn render_status(format: Format, snapshot: &obliniscor_core::MemorySnapshot) -> 
     match format {
         Format::Json => format!(
             "{{\"total\":{},\"available\":{},\"free\":{}}}",
-            snapshot.total, snapshot.available, snapshot.free
+            snapshot.total,
+            snapshot.available,
+            snapshot
+                .free
+                .map_or_else(|| "null".to_owned(), |free| free.to_string())
         ),
-        Format::Human => format!(
-            "mémoire : {:.1} Gio au total, {:.1} Gio disponibles, {:.1} Gio libres",
-            gio(snapshot.total),
-            gio(snapshot.available),
-            gio(snapshot.free)
-        ),
+        // Ne jamais écrire « 0 libre » quand on n'a pas mesuré : c'est la confusion que le
+        // spike mémoire a démontée. `null` en JSON, une phrase en clair.
+        Format::Human => match snapshot.free {
+            Some(free) => format!(
+                "mémoire : {:.1} Gio au total, {:.1} Gio disponibles, {:.1} Gio libres",
+                gio(snapshot.total),
+                gio(snapshot.available),
+                gio(free)
+            ),
+            None => format!(
+                "mémoire : {:.1} Gio au total, {:.1} Gio disponibles (libre non mesuré sur ce système)",
+                gio(snapshot.total),
+                gio(snapshot.available)
+            ),
+        },
     }
 }
 

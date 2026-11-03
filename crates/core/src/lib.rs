@@ -191,13 +191,21 @@ impl ErrorCode {
 
 /// État de la mémoire à un instant donné, tel que le système le rapporte.
 ///
-/// Les trois valeurs sont en octets et ne sont **pas** recalculées ici : `available` vient du
+/// Les valeurs sont en octets et ne sont **pas** recalculées ici : `available` vient du
 /// système, qui sait mieux que nous ce qui est réutilisable (sous Linux, `MemAvailable`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct MemorySnapshot {
+    /// Mémoire physique totale, en octets.
     pub total: u64,
+    /// Mémoire disponible pour de nouvelles allocations, en octets.
     pub available: u64,
-    pub free: u64,
+    /// Mémoire libre, **quand le système la donne**.
+    ///
+    /// Windows ne l'expose pas par son API publique : la liste libre demande la requête noyau
+    /// (`NtQuerySystemInformation`, privilège `SeProfileSingleProcess`), qui arrive avec OBL-022.
+    /// `None` dit « non mesuré ici », ce qui n'est pas « zéro octet libre » — le spike mémoire
+    /// a montré qu'on confond les deux à ses dépens.
+    pub free: Option<u64>,
 }
 
 /// Résultat d'une opération de nettoyage, zone par zone.

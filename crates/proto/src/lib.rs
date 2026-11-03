@@ -116,8 +116,8 @@ pub enum Reply {
         total: u64,
         /// Mémoire disponible pour de nouvelles allocations.
         available: u64,
-        /// Mémoire libre.
-        free: u64,
+        /// Mémoire libre, absente quand le système ne l'expose pas.
+        free: Option<u64>,
     },
     /// Processus visibles.
     Processes {

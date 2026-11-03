@@ -32,7 +32,7 @@ fn a_status_request_returns_what_the_probe_reports() {
     let snapshot = MemorySnapshot {
         total: 32_000,
         available: 12_000,
-        free: 8_000,
+        free: Some(8_000),
     };
     let service = Service::new(
         FakeMemory::new(snapshot),

@@ -28,7 +28,7 @@ fn service() -> Service<FakeMemory, FakePrivileges, FakeProcesses> {
         FakeMemory::new(MemorySnapshot {
             total: 32_000,
             available: 12_000,
-            free: 8_000,
+            free: Some(8_000),
         }),
         FakePrivileges::default(),
         FakeProcesses::new(),
@@ -61,7 +61,7 @@ fn a_status_request_makes_the_round_trip_over_the_pipe() {
         } => {
             assert_eq!(total, 32_000);
             assert_eq!(available, 12_000);
-            assert_eq!(free, 8_000);
+            assert_eq!(free, Some(8_000));
         }
         other => panic!("réponse inattendue : {other:?}"),
     }

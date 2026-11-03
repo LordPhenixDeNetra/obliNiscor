@@ -76,6 +76,72 @@ beaucoup de portables et de cartes mères récentes.
 - **Défragmentation et TRIM effectifs** : non exécutés, et ils ne le seront pas sans votre
   accord — ce sont des écritures.
 
+## macOS — deuxième passage
+
+- **Machine :** MacBook Intel (i5-7360U), macOS 13.7.8, APFS sur un SSD de 121 Go
+- **Mesuré par :** l'utilisateur, en compte normal, sans `sudo`
+- **État :** partiel — le TRIM n'est pas exposé par `diskutil info` sur ce volume APFS
+
+### Résultats bruts
+
+| Élément | Valeur | Source |
+| --- | --- | --- |
+| Disque physique | `disk0`, 121,3 Go, interne | `diskutil list` |
+| Conteneur APFS | `disk1`, 121,0 Go, **synthétisé** | `diskutil list` |
+| Volume système | `disk1s5s1`, snapshot APFS, 9,3 Go | `diskutil list` |
+| Type de média | **Solid State: Yes** | `diskutil info /` |
+| Système de fichiers | APFS | `diskutil info /` |
+| Amovible | Non (`Fixed`) | `diskutil info /` |
+| Privilège demandé | **aucun** | les trois commandes passent en utilisateur |
+
+### Ce que macOS a établi
+
+7. **Le type de média est donné sans privilège.** `diskutil info` répond `Solid State: Yes` à
+   un compte normal : `FR-STO-1` est satisfait sous macOS, sans équivalent du piège Windows de
+   l'accès `GENERIC_READ`.
+8. **`df` ment sur APFS, et c'est structurel.** Les six volumes du conteneur affichent tous
+   **118 181 844 blocs** — la taille du conteneur, pas la leur. Les volumes APFS **partagent**
+   leur espace : afficher « 4406988 blocs libres » six fois ferait croire à six fois plus de
+   place. L'interface doit montrer l'espace du **conteneur**, une fois, et rattacher les volumes
+   à lui.
+9. **Les volumes sont hiérarchisés : physique, conteneur, volumes.** `disk0` (disque) contient
+   `disk1` (conteneur synthétisé), qui contient `disk1s1`…`disk1s6`. Une énumération qui
+   traite les trois niveaux comme des volumes distincts compte trois fois le même disque.
+10. **Le TRIM n'est pas visible sur APFS par `diskutil info`.** Le cas HFS+ l'affiche ; ici,
+    APFS gère la ré-optimisation en interne. `FR-STO-9` ne peut donc pas s'appuyer sur ce champ
+    sous macOS : il faut soit `system_profiler SPStorageDataType`, soit considérer qu'APFS sur
+    SSD implique la ré-optimisation.
+
+### Résultats complémentaires (`system_profiler`)
+
+| Élément | Valeur |
+| --- | --- |
+| Disque | `APPLE SSD SM0128L` |
+| **Type de média** | **SSD** (`Medium Type: SSD`) |
+| **Bus** | **PCI-Express** (`Protocol: PCI-Express`) |
+| Interne | Oui |
+| S.M.A.R.T. | *Verified* |
+| TRIM | **absent** de la sortie, au niveau disque comme au niveau volume |
+| Espace | **Free 4,29 Go / Capacity 121,02 Go — identiques pour les deux volumes** |
+
+11. **`system_profiler` répond à `FR-STO-1` sous macOS, et mieux que Windows.** Il donne à la
+    fois le **type de média** (`SSD`) et le **bus** (`PCI-Express`), là où Windows annonce `raid`
+    derrière un contrôleur RST et ne sait plus distinguer NVMe de SATA. Sous macOS, la question
+    « SSD ou disque dur, et sur quel bus » a une réponse directe.
+12. **Le TRIM reste invisible, y compris au niveau du disque physique.** `diskutil info
+    /dev/disk0` n'affiche que `Solid State: Yes`. `FR-STO-9` ne peut donc pas s'appuyer sur un
+    champ TRIM sous macOS : la règle devra être « APFS sur SSD implique la ré-optimisation
+    interne », écrite comme telle.
+13. **Le conteneur partagé est confirmé par une seconde source.** `system_profiler` annonce
+    `Free: 4,29 Go` et `Capacity: 121,02 Go` pour **les deux** volumes — exactement comme `df`.
+    Ce n'est donc pas un artefact de `df` : c'est le modèle APFS, et l'interface doit le refléter.
+
+### Ce qui manque encore pour clore macOS
+
+- **Apple Silicon** : comme pour la mémoire, la machine mesurée est un Intel.
+- **Un disque externe ou un HDD** : aucun support à pénalité de recherche n'était disponible, donc
+  la branche « disque dur » de `FR-STO-9` n'a pas été exercée sous macOS.
+
 ## Conséquences pour le cahier des charges
 
 - `FR-STO-1` doit demander **trois** informations, pas deux : pénalité de recherche

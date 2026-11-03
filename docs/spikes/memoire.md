@@ -113,6 +113,76 @@ commandes ne mesurent pas au même instant. C'est très en deçà du critère de
 - **Linux et macOS** sont à faire : `free -b` / `/proc/meminfo` et `vm_stat` /
   `host_statistics64`.
 
+## macOS — troisième passage
+
+- **Machine :** MacBook Intel (Core i5-7360U), macOS **13.7.8** (Ventura), build 22H730, 8 Gio
+- **Mesuré par :** l'utilisateur, en compte normal, sans `sudo`
+- **État :** partiel — un échantillon `vm_stat` manque, et la machine est **Intel**, pas Apple
+  Silicon
+
+### Résultats bruts
+
+| Champ | Valeur | Source |
+| --- | --- | --- |
+| RAM totale | 8 589 934 592 o (8 Gio) | `sysctl -n hw.memsize` |
+| Taille de page | 4096 | `sysctl -n hw.pagesize` |
+| Pages totales | 2 097 152 | `memory_pressure -Q` |
+| Mémoire libre système | **77 %** | `memory_pressure -Q` |
+| Privilège demandé | **aucun** | les trois commandes passent en utilisateur |
+
+### Ce que macOS a établi
+
+8. **macOS mesure sans privilège.** `sysctl` et `memory_pressure -Q` répondent à un compte
+   normal. C'est la confirmation de l'ADR-009 : sur macOS, la mesure existe et ne demande
+   rien — c'est le **nettoyage** qui est absent, pas la lecture.
+9. **`memory_pressure -Q` donne un pourcentage, pas des octets.** Pour les octets, il faut
+   `vm_stat` et la taille de page : le pourcentage seul ne suffit pas à afficher « 3,2 Gio
+   disponibles ».
+10. **Ma procédure était fausse.** J'avais écrit `vm_stat 1 2` ; macOS refuse :
+    `usage: vm_stat [[-c count] interval]`. La bonne commande est **`vm_stat -c 2 1`**. Un
+    protocole non exécuté est un protocole supposé, et celui-ci a été corrigé par l'exécution.
+11. **La machine de mesure est Intel.** macOS sur Apple Silicon n'est pas couvert : le
+    comportement de `vm_stat` devrait être identique, mais « devrait » n'est pas une mesure.
+
+### Résultats complémentaires (`vm_stat -c 2 1`)
+
+Taille de page 4096, 2 097 152 pages au total. Deux échantillons espacés d'une seconde :
+
+| Compteur | Échantillon 1 | Échantillon 2 | En octets |
+| --- | --- | --- | --- |
+| `free` | 46 990 | 49 610 | ≈ 192 Mo |
+| `active` | 801 539 | 811 845 | ≈ 3,26 Go |
+| `inactive` | 793 564 | 797 857 | ≈ 3,25 Go |
+| `speculative` | 4 383 | 4 382 | ≈ 17 Mo |
+| `wired` | 449 884 | 432 686 | ≈ 1,84 Go |
+| `purgeable` | 96 473 | 102 284 | ≈ 394 Mo |
+| `compressed` / `compressor` | 1 482 / 490 | 1 482 / 490 | ≈ 5,8 Mo / 1,9 Mo |
+| `pageins` / `pageouts` | 421 494 / 2 574 | 0 / 0 | compteurs cumulés |
+| `swapins` / `swapouts` | 0 / 0 | 0 / 0 | aucun échange |
+
+12. **« libre » et « disponible » diffèrent d'un facteur trente sous macOS.** `memory_pressure -Q`
+    annonce **77 % de mémoire libre**, alors que `vm_stat` ne compte que **46 990 pages libres**,
+    soit 192 Mo sur 8 Gio (2,3 %). Les deux ont raison : macOS compte comme récupérable
+    l'inactif, le spéculatif et le purgeable — pas seulement le libre. Une interface qui
+    afficherait `free × page_size` annoncerait « 192 Mo disponibles » sur une machine à 77 %,
+    c'est-à-dire l'inverse de la vérité pour l'utilisateur.
+13. **La définition de « disponible » doit être écrite par système**, pas calculée une fois pour
+    toutes : Windows a `AvailPhys`, Linux a `MemAvailable`, macOS n'a rien d'équivalent — il faut
+    additionner `free + inactive + speculative + purgeable`, et le documenter comme *notre*
+    définition, pas comme celle du noyau.
+14. **Les défauts de page et l'échange sont mesurables** : `pageins`, `pageouts`, `swapins`,
+    `swapouts` sont disponibles pour `FR-MEM-6`. Ici aucun échange n'a eu lieu, ce qui est le
+    comportement attendu d'une machine à 77 % de mémoire libre.
+15. **La compression mémoire est visible** (`compressed`, `compressor`) : elle existe sous macOS
+    et devra être affichée ou explicitement ignorée, mais pas oubliée.
+
+### Ce qui manque encore pour clore macOS
+
+- **Apple Silicon** : la machine mesurée est un Intel (i5-7360U). Les compteurs devraient être
+  identiques, mais ce n'est pas mesuré. Réserve à écrire dans l'ADR ou à lever avec un Mac ARM.
+- **Windows 10 22H2** : non disponible. Couvert par la détection à l'exécution de `FR-MEM-4`
+  plutôt que par une table écrite pour une version.
+
 ## Conséquences pour le cahier des charges
 
 - `FR-MEM-1` doit nommer **trois** sources, pas deux : `GlobalMemoryStatusEx` (RAM physique et

@@ -52,7 +52,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| P0 Cadrage et spikes | 10 | 3 | 0 | 0 | 2 | 5 | 0 | 50 % |
+| P0 Cadrage et spikes | 10 | 3 | 0 | 2 | 0 | 5 | 0 | 55 % |
 | P1 Fondations | 10 | 0 | 0 | 3 | 0 | 7 | 0 | 65 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **66** | **0** | **3** | **2** | **12** | **5** | **23 %** |
+| **Total** | **88** | **66** | **0** | **5** | **0** | **12** | **5** | **24 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -94,8 +94,8 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-002 | Disponibilité du nom | Fait | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres (PR #2) |
 | OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
 | OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
-| OBL-005 | Spike mémoire | Bloqué | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
-| OBL-006 | Spike stockage | Bloqué | — | 1,5 | 0,5 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
+| OBL-005 | Spike mémoire | En revue | — | 3 | 2,5 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
+| OBL-006 | Spike stockage | En revue | — | 1,5 | 1 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
 | OBL-008 | Spike service et canal nommé | Fait | — | 1,5 | 0,5 | 003 | `docs/spikes/service.md` : ACL posée à la création, refus en erreur 5 ; le descripteur du service doit nommer `SY` et `IU`, pas `OW` |
 | OBL-009 | Protocole de mesure, machines A–H | À faire | — | 1,5 | — | 003 |  |
@@ -234,8 +234,8 @@ Toute tâche « Bloqué » a une ligne ici. Une ligne résolue reste visible (st
 
 | Réf. | Tâche | Description du blocage | Depuis | Propriétaire | Action pour débloquer | Échéance | État |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
-| B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert |
+| B-002 | OBL-005 | Mesuré sur Windows 11, Linux et macOS 13 (Intel). **Levé** avec trois réserves écrites dans le rapport : Windows 10 non mesuré (couvert par FR-MEM-4), Mac ARM non mesuré, listes de pages non lues (demandent un privilège) | 2026-11-01 | lead | — | 2026-11-03 | Levé |
+| B-003 | OBL-006 | Mesuré sur Windows 11, Linux et macOS 13. **Levé** avec deux réserves : aucun disque à pénalité de recherche testé (branche HDD de FR-STO-9), Mac ARM non mesuré | 2026-11-01 | lead | — | 2026-11-03 | Levé |
 
 ## 5. Décisions en attente
 

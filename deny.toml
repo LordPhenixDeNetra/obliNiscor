@@ -27,6 +27,14 @@ allow = [
     "CDLA-Permissive-2.0",
 ]
 
+# MPL-2.0 est un copyleft **par fichier**, pas par œuvre : lier `option-ext` sans le modifier
+# ne contamine pas obliNiscor, et la licence du projet (MIT OR Apache-2.0) reste valable pour
+# tout son propre code. La crate arrive par `lpdnsoft-settings` → `dirs-sys` : elle est
+# transitive, nous ne la modifions pas et nous ne la distribuons pas en source (ADR-008).
+[[licenses.exceptions]]
+name = "option-ext"
+allow = ["MPL-2.0"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"

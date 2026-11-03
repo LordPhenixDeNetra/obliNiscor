@@ -51,8 +51,10 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 À mettre à jour à chaque revue hebdomadaire (compter les lignes par statut dans la section 3).
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| P0 Cadrage et spikes | 10 | 4 | 2 | 0 | 0 | 4 | 0 | 40 % |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
+| B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert | --- |
+| P0 Cadrage et spikes | 10 | 4 | 0 | 0 | 2 | 4 | 0 | 40 % |
 | P1 Fondations | 10 | 6 | 0 | 2 | 0 | 2 | 0 | 24 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -63,7 +65,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **73** | **2** | **2** | **0** | **6** | **5** | **13 %** |
+| **Total** | **88** | **73** | **0** | **2** | **2** | **6** | **5** | **13 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -94,8 +96,8 @@ Colonnes : **Est.** = estimation en jours-personne ; **Réel** = jours consommé
 | OBL-002 | Disponibilité du nom | Fait | — | 0,5 | 0,5 | — | `docs/spikes/nom.md` : six noms libres (PR #2) |
 | OBL-003 | Dépôt, outillage, `xtask ci` | Fait | — | 2 | 2 | 001 | `cargo xtask ci` + contrôle i18n (PR #2, #3) |
 | OBL-004 | CI Windows x64 et ARM64 | Fait | — | 1,5 | 1,5 | 003 | trois OS + MSRV **verts** (4 jobs, PR #4) ; ARM64 natif reste à ajouter |
-| OBL-005 | Spike mémoire | En cours | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
-| OBL-006 | Spike stockage | En cours | — | 1,5 | 0,5 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
+| OBL-005 | Spike mémoire | Bloqué | — | 3 | 1 | 003 | `docs/spikes/memoire.md` : Windows 11 **et Linux** mesurés (trois pièges documentés, écart 0,03 % avec `free -b`) ; Windows 10 et macOS à faire |
+| OBL-006 | Spike stockage | Bloqué | — | 1,5 | 0,5 | 003 | `docs/spikes/stockage.md` : Windows mesuré (seek penalty, TRIM, piège de l'ouverture) ; Linux et macOS à faire |
 | OBL-007 | Spike pare-feu | À faire | — | 2 | — | 003 |  |
 | OBL-008 | Spike service et canal nommé | À faire | — | 1,5 | — | 003 |  |
 | OBL-009 | Protocole de mesure, machines A–H | À faire | — | 1,5 | — | 003 |  |
@@ -257,6 +259,7 @@ Une ligne par changement notable (statut, estimation, décision). Les plus réce
 
 | Date | Tâche | Changement | Auteur | Preuve |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | OBL-005, OBL-006 | Les deux spikes passent **Bloqué** : ce qui manque n'est pas du travail mais des machines (macOS, Windows 10, Linux pour le stockage). `docs/spikes/procedures.md` donne les commandes exactes à exécuter, machine par machine, et deux lignes sont ouvertes au registre des blocages. | — | PR « docs: procedure for the missing machines » |
 | 2026-11-01 | OBL-005 | Spike mémoire, second passage : backend Linux (binaire statique musl, rien installé dans le WSL) ; valeurs identiques à `free -b` à 0,03 % près. Troisième piège : `buff/cache` = Buffers + Cached + SReclaimable. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-005 | Spike mémoire commencé : outil jetable `spikes/memoire` (lecture seule) et mesures réelles sur Windows 11. Deux pièges trouvés : `GetPerformanceInfo` compte en pages, et aucune API « publique » ne donne la mémoire libre. | — | `docs/spikes/memoire.md` |
 | 2026-11-01 | OBL-100 | Cible ARM64 vérifiée en local (Linux 30 s, Windows 9 s) puis ajoutée à la CI. L'empaquetage continu devient OBL-111 : il n'y a encore aucun binaire à empaqueter. | — | PR « ci: check ARM64 » |

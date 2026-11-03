@@ -1,0 +1,21 @@
+[package]
+name = "obliniscor-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Commande d'obliNiscor : interroge le service et affiche le résultat"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+obliniscor-core = { workspace = true }
+obliniscor-platform = { workspace = true }
+obliniscor-proto = { workspace = true }
+obliniscor-store = { workspace = true }
+obliniscor-sys = { workspace = true }
+serde_json = { workspace = true }
+lpdnsoft-settings = { workspace = true }

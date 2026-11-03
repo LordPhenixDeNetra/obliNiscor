@@ -267,9 +267,11 @@ dependencies = [
 name = "obliniscor-store"
 version = "0.1.0"
 dependencies = [
+ "lpdnsoft-atomic",
  "lpdnsoft-settings",
  "obliniscor-core",
  "serde",
+ "serde_json",
  "thiserror",
  "toml",
 ]

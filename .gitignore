@@ -42,6 +42,3 @@ coverage/
 *.snk
 .env
 .env.*
-
-AGENTS.local.md
-CLAUDE.local.md

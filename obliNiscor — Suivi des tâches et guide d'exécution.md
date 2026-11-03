@@ -52,10 +52,8 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 
 | Phase | Tâches | À faire | En cours | En revue | Bloqué | Fait | Reporté | Avancement |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
-| B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert | --- |
 | P0 Cadrage et spikes | 10 | 3 | 0 | 0 | 2 | 5 | 0 | 50 % |
-| P1 Fondations | 10 | 2 | 0 | 4 | 0 | 4 | 0 | 50 % |
+| P1 Fondations | 10 | 1 | 0 | 4 | 0 | 5 | 0 | 50 % |
 | P2 Mémoire | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P3 Processus | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P4 Interface | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
@@ -65,7 +63,7 @@ Ce document sert à deux choses : **suivre** l'avancement (tableaux, blocages, j
 | P7 Durcissement | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | P8 Distribution | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 % |
 | Tâches C | 5 | 0 | 0 | 0 | 0 | 0 | 5 | — |
-| **Total** | **88** | **68** | **0** | **4** | **2** | **9** | **5** | **19 %** |
+| **Total** | **88** | **67** | **0** | **4** | **2** | **10** | **5** | **20 %** |
 
 **Avancement** = jours estimés des tâches « Fait » ÷ jours estimés totaux de la phase (et non le nombre de lignes : une tâche de 4 jours pèse plus qu'une tâche d'un demi-jour).
 
@@ -236,7 +234,8 @@ Toute tâche « Bloqué » a une ligne ici. Une ligne résolue reste visible (st
 
 | Réf. | Tâche | Description du blocage | Depuis | Propriétaire | Action pour débloquer | Échéance | État |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| B-001 | *(exemple — à remplacer)* OBL-007 | Le pare-feu de la machine de test est géré par une stratégie de groupe | 2026-11-10 | — | Utiliser une machine virtuelle isolée | 2026-11-12 | Ouvert |
+| B-002 | OBL-005 | Spike mémoire : macOS et Windows 10 22H2 non mesurés ; les listes de pages exigent la requête noyau avec un privilège | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §1 et §2 sur un Mac et un Windows 10, et rapporter la sortie | — | Ouvert |
+| B-003 | OBL-006 | Spike stockage : mesures Linux et macOS non faites ; le type de bus ne dit pas NVMe sous contrôleur RAID | 2026-11-01 | lead | Exécuter `docs/spikes/procedures.md` §3 et §1 sur un Linux et un Mac | — | Ouvert |
 
 ## 5. Décisions en attente
 
